@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: farm-edge
+  datasource:
+    url: ${EDGE_DB_URL:jdbc:postgresql://localhost:5432/farm_edge}
+    username: ${EDGE_DB_USER:edge_app}
+    password: ${EDGE_DB_PASSWORD:}
+  flyway:
+    schemas: edge
+    default-schema: edge
+    create-schemas: false
+  rabbitmq:
+    # Central broker is reached ONLY through the WAN path (wan-proxy in the lab).
+    host: ${RABBITMQ_HOST:wan-proxy}
+    port: ${RABBITMQ_PORT:5673}
+    username: ${RABBITMQ_USER:vinabeef}
+    password: ${RABBITMQ_PASSWORD:}
+    virtual-host: ${RABBITMQ_VHOST:vinabeef}
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  devtools:
+    restart:
+      poll-interval: 2s
+      quiet-period: 1s
+
+edge:
+  farm-id: ${FARM_ID:FARM-01}
+  debounce: 5s
+  relay:
+    exchange: vinabeef.movement
+    batch-size: 100
+    confirm-timeout: 5s
+    interval-ms: 500
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+  health:
+    # Local gate readiness must not depend on the WAN/broker.
+    rabbit:
+      enabled: false

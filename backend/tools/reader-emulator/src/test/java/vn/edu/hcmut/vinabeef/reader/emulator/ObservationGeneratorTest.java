@@ -56,6 +56,24 @@ class ObservationGeneratorTest {
     }
 
     @Test
+    void readsPerPassageEmitsDistinctReadsWithSameTagAndDirection() {
+        List<ObjectNode> obs = run("--count", "2", "--tags", "A,B", "--reads-per-passage", "3",
+                "--start", "2026-11-17T02:00:00Z");
+        assertEquals(6, obs.size());
+        assertEquals(6, obs.stream().map(o -> o.get("observationId").asText()).distinct().count());
+        assertEquals(List.of("A", "A", "A", "B", "B", "B"), obs.stream().map(o -> o.get("tagId").asText()).toList());
+        obs.forEach(o -> assertEquals("IN", o.get("direction").asText()));
+        assertEquals(List.of(1L, 2L, 3L, 4L, 5L, 6L), obs.stream().map(o -> o.get("seq").asLong()).toList());
+        assertEquals("2026-11-17T09:00:00.200+07:00", obs.get(2).get("observedAt").asText());
+    }
+
+    @Test
+    void forcedDirectionAppliesToEveryRead() {
+        run("--count", "4", "--tags", "A,B", "--direction", "OUT").forEach(o -> assertEquals("OUT", o.get("direction").asText()));
+        assertThrows(IllegalArgumentException.class, () -> EmulatorOptions.parse("--kind", "MOBILE", "--direction", "IN"));
+    }
+
+    @Test
     void rejectsUnknownKind() {
         assertThrows(IllegalArgumentException.class, () -> EmulatorOptions.parse("--kind", "NFC"));
     }

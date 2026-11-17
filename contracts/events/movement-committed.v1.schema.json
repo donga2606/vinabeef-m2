@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vinabeef.local/contracts/events/movement-committed.v1.schema.json",
+  "title": "MovementCommitted v1",
+  "description": "Emitted by farm-edge (owner: Dong A) after a gate passage is committed locally, through the transactional outbox. Consumer: movement-alert (central projection). The farm-edge store is the source of truth for the farm count; central is a projection. eventId is stable across retries, so consumers dedupe on it. edgeSeq is gapless and monotonic per farm, so a consumer can detect missing events (gaps) and stale or out-of-order ones.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "farmId", "edgeSeq", "tagId", "direction", "presenceAfter", "anomaly", "occurredAt", "readerId", "sourceObservationId", "committedAt"],
+  "properties": {
+    "schemaVersion": { "const": "movement-committed.v1" },
+    "eventId": { "type": "string", "format": "uuid", "description": "= passageId at the edge." },
+    "farmId": { "type": "string", "pattern": "^[A-Z0-9][A-Z0-9-]{2,31}$" },
+    "edgeSeq": { "type": "integer", "minimum": 1 },
+    "tagId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "direction": { "enum": ["IN", "OUT"] },
+    "presenceAfter": { "enum": ["INSIDE", "OUTSIDE"], "description": "Tag presence at the edge after this passage." },
+    "anomaly": { "type": "boolean", "description": "True when the direction contradicts the known presence (e.g. IN while already INSIDE). Recorded and needs review; never silently dropped." },
+    "occurredAt": { "type": "string", "format": "date-time", "description": "Reader source time of the first observation of the passage." },
+    "readerId": { "type": "string" },
+    "sourceObservationId": { "type": "string", "format": "uuid" },
+    "committedAt": { "type": "string", "format": "date-time", "description": "Edge commit time." }
+  }
+}

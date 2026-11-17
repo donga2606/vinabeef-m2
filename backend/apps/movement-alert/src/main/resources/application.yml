@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: movement-alert
+  datasource:
+    url: ${MOVEMENT_DB_URL:jdbc:postgresql://localhost:5432/vinabeef}
+    username: ${MOVEMENT_DB_USER:movement_app}
+    password: ${MOVEMENT_DB_PASSWORD:}
+  flyway:
+    schemas: movement
+    default-schema: movement
+    create-schemas: false
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:vinabeef}
+    password: ${RABBITMQ_PASSWORD:}
+    virtual-host: ${RABBITMQ_VHOST:vinabeef}
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 20
+  devtools:
+    restart:
+      poll-interval: 2s
+      quiet-period: 1s
+
+lab:
+  faults:
+    enabled: ${LAB_FAULTS_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always

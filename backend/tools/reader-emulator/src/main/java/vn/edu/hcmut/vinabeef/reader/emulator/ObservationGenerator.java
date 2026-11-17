@@ -34,25 +34,33 @@ final class ObservationGenerator {
 
         for (int i = 1; i <= o.count(); i++) {
             String tag = o.tags().get((i - 1) % o.tags().size());
-            ObjectNode obs = MAPPER.createObjectNode();
-            obs.put("schemaVersion", "tag-observation.v1");
-            obs.put("observationId", ids.get().toString());
-            obs.put("readerId", o.readerId());
-            obs.put("readerKind", o.readerKind());
-            obs.put("seq", seq);
-            obs.put("tagId", tag);
-            obs.put("observedAt", RFC3339.format(t.atOffset(FARM_OFFSET)));
+            String dir = null;
             if (o.readerKind().equals("GATE")) {
-                String dir = "IN".equals(lastDirection.get(tag)) ? "OUT" : "IN";
+                dir = o.direction() != null ? o.direction() : "IN".equals(lastDirection.get(tag)) ? "OUT" : "IN";
                 lastDirection.put(tag, dir);
-                obs.put("direction", dir);
             }
-            out.add(obs);
+            ObjectNode obs = null;
+            // One logical passage may be seen several times by the antenna (multiplicity):
+            // each extra read has its own observationId/seq, 100 ms apart in source time.
+            for (int k = 0; k < o.readsPerPassage(); k++) {
+                obs = MAPPER.createObjectNode();
+                obs.put("schemaVersion", "tag-observation.v1");
+                obs.put("observationId", ids.get().toString());
+                obs.put("readerId", o.readerId());
+                obs.put("readerKind", o.readerKind());
+                obs.put("seq", seq);
+                obs.put("tagId", tag);
+                obs.put("observedAt", RFC3339.format(t.plusMillis(100L * k).atOffset(FARM_OFFSET)));
+                if (dir != null) {
+                    obs.put("direction", dir);
+                }
+                out.add(obs);
+                seq++;
+            }
 
             if (o.dupEvery() > 0 && i % o.dupEvery() == 0) {
                 out.add(obs.deepCopy()); // retransmit: identical payload, same observationId
             }
-            seq++;
             if (o.gapEvery() > 0 && i % o.gapEvery() == 0) {
                 seq++; // missed read
             }

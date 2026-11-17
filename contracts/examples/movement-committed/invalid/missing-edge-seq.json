@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "movement-committed.v1",
+  "eventId": "3d7f1c22-9b8e-4a51-8f0e-1c2d3e4f5a60",
+  "farmId": "FARM-01",
+  "tagId": "VN-0001-000123",
+  "direction": "IN",
+  "presenceAfter": "INSIDE",
+  "anomaly": false,
+  "occurredAt": "2026-11-17T09:00:00.000+07:00",
+  "readerId": "GATE-FARM01-A",
+  "sourceObservationId": "0b7d9e44-81aa-4f0f-8d0c-5c2e7a9b3c11",
+  "committedAt": "2026-11-17T09:00:00.041+07:00"
+}

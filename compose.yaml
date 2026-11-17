@@ -152,7 +152,75 @@ services:
       timeout: 3s
       retries: 10
 
-  # farm-edge / movement-alert: added here only if R0 keeps gate code (DONGA-03/04).
+  farm-edge:
+    profiles: [gate, full]
+    image: *maven-image
+    working_dir: /workspace/backend
+    command: ["bash", "/infra/java-dev/run-with-reload.sh", "apps/farm-edge"]
+    environment:
+      EDGE_DB_URL: jdbc:postgresql://edge-db:5432/${EDGE_DB_NAME}
+      EDGE_DB_USER: ${EDGE_DB_USER}
+      EDGE_DB_PASSWORD: ${EDGE_DB_PASSWORD}
+      FARM_ID: ${FARM_ID}
+      # WAN path only: the farm reaches the central broker through wan-proxy.
+      RABBITMQ_HOST: wan-proxy
+      RABBITMQ_PORT: "5673"
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST}
+    volumes:
+      - ./backend:/workspace/backend
+      - ./infra/java-dev:/infra/java-dev:ro
+      - m2-cache:/root/.m2
+    ports:
+      - "127.0.0.1:${EDGE_API_PORT:-8090}:8080"
+    networks: [farm-lan]
+    depends_on:
+      edge-db:
+        condition: service_healthy
+      wan-proxy:
+        condition: service_started   # lab path; edge starts and commits locally even if the WAN is down
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  movement-alert:
+    profiles: [gate, full]
+    image: *maven-image
+    working_dir: /workspace/backend
+    command: ["bash", "/infra/java-dev/run-with-reload.sh", "apps/movement-alert"]
+    restart: on-failure   # T04 lab fault halts the JVM; the container comes back by itself
+    environment:
+      MOVEMENT_DB_URL: jdbc:postgresql://central-db:5432/${CENTRAL_DB_NAME}
+      MOVEMENT_DB_USER: ${MOVEMENT_DB_USER}
+      MOVEMENT_DB_PASSWORD: ${MOVEMENT_DB_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST}
+      LAB_FAULTS_ENABLED: "true"   # lab profile only; exposes /lab/v1/faults
+    volumes:
+      - ./backend:/workspace/backend
+      - ./infra/java-dev:/infra/java-dev:ro
+      - m2-cache:/root/.m2
+    ports:
+      - "127.0.0.1:${MOVEMENT_API_PORT:-8091}:8080"
+    networks: [central]
+    depends_on:
+      central-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
 
   # ---------- tools (profile: tools) — run with `dev mvn|flutter|emulator`, never long-lived ----------
   toolbox:
