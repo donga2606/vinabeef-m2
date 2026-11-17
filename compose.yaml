@@ -1,0 +1,186 @@
+# VinaBeef M2 local runtime. Owner: Đông A (review: Phú).
+# Use scripts/dev.ps1 (or ./dev) rather than calling profiles by hand:
+#   infra = core only | local = core + apps | gate = core + apps + gate | full = everything
+# Core services (no profile) always start. `down` never removes volumes; use `dev reset -Force`.
+name: vinabeef
+
+x-maven-image: &maven-image maven:3.9.11-eclipse-temurin-21
+
+services:
+  # ---------- core ----------
+  central-db:
+    image: postgres:17.7
+    environment:
+      POSTGRES_USER: ${CENTRAL_DB_SUPERUSER}
+      POSTGRES_PASSWORD: ${CENTRAL_DB_SUPERPASSWORD}
+      POSTGRES_DB: ${CENTRAL_DB_NAME}
+      HEALTH_DB_USER: ${HEALTH_DB_USER}
+      HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD}
+      IAM_DB_USER: ${IAM_DB_USER}
+      IAM_DB_PASSWORD: ${IAM_DB_PASSWORD}
+      MOVEMENT_DB_USER: ${MOVEMENT_DB_USER}
+      MOVEMENT_DB_PASSWORD: ${MOVEMENT_DB_PASSWORD}
+      KEYCLOAK_DB_USER: ${KEYCLOAK_DB_USER}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - central-db-data:/var/lib/postgresql/data
+      - ./infra/postgres/central:/docker-entrypoint-initdb.d:ro
+    networks: [central]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.5
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://central-db:5432/keycloak
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      # Public issuer = what the host / emulator (adb reverse) uses; containers may still call keycloak:8080.
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_PORT}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./infra/oidc/realm:/opt/keycloak/data/import:ro
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+    networks: [central]
+    depends_on:
+      central-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # ---------- apps (profile: apps / full) ----------
+  herd-health:
+    profiles: [apps, full]
+    image: *maven-image
+    working_dir: /workspace/backend
+    command: ["bash", "/infra/java-dev/run-with-reload.sh", "apps/herd-health"]
+    environment:
+      HEALTH_DB_URL: jdbc:postgresql://central-db:5432/${CENTRAL_DB_NAME}
+      HEALTH_DB_USER: ${HEALTH_DB_USER}
+      HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD}
+      OIDC_PUBLIC_ISSUER: ${OIDC_PUBLIC_ISSUER}
+      OIDC_INTERNAL_JWK_SET_URI: ${OIDC_INTERNAL_JWK_SET_URI}
+    volumes:
+      - ./backend:/workspace/backend
+      - ./contracts:/workspace/contracts:ro
+      - ./infra/java-dev:/infra/java-dev:ro
+      - m2-cache:/root/.m2
+    ports:
+      - "${API_PORT}:8080"
+    networks: [central]
+    depends_on:
+      central-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  # ---------- gate (profile: gate / full) — farm side reaches central ONLY via wan-proxy ----------
+  edge-db:
+    profiles: [gate, full]
+    image: postgres:17.7
+    environment:
+      POSTGRES_USER: ${EDGE_DB_SUPERUSER}
+      POSTGRES_PASSWORD: ${EDGE_DB_SUPERPASSWORD}
+      POSTGRES_DB: ${EDGE_DB_NAME}
+      EDGE_DB_USER: ${EDGE_DB_USER}
+      EDGE_DB_PASSWORD: ${EDGE_DB_PASSWORD}
+    volumes:
+      - edge-db-data:/var/lib/postgresql/data
+      - ./infra/postgres/edge:/docker-entrypoint-initdb.d:ro
+    networks: [farm-lan]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    profiles: [gate, full]
+    image: rabbitmq:4.1.4-management
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - "127.0.0.1:${RABBITMQ_MGMT_PORT}:15672"
+    networks: [central]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+
+  wan-proxy:
+    profiles: [gate, full]
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    volumes:
+      - ./infra/faults:/config:ro
+    ports:
+      - "127.0.0.1:${TOXIPROXY_ADMIN_PORT}:8474"
+    # Bridges the two networks: farm-lan clients use wan-proxy:5673 to reach the broker.
+    networks: [farm-lan, central]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/toxiproxy-cli", "list"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # farm-edge / movement-alert: added here only if R0 keeps gate code (DONGA-03/04).
+
+  # ---------- tools (profile: tools) — run with `dev mvn|flutter|emulator`, never long-lived ----------
+  toolbox:
+    profiles: [tools]
+    image: *maven-image
+    working_dir: /workspace/backend
+    volumes:
+      - ./backend:/workspace/backend
+      - ./contracts:/workspace/contracts:ro
+      - m2-cache:/root/.m2
+    networks: [central, farm-lan]
+
+  flutter:
+    profiles: [tools]
+    image: ghcr.io/cirruslabs/flutter:3.35.7
+    working_dir: /workspace/mobile
+    volumes:
+      - ./mobile:/workspace/mobile
+      - ./contracts:/workspace/contracts:ro
+      - pub-cache:/root/.pub-cache
+
+networks:
+  central:
+  farm-lan:
+
+volumes:
+  central-db-data:
+  edge-db-data:
+  rabbitmq-data:
+  m2-cache:
+  pub-cache:

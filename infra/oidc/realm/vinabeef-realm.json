@@ -1,0 +1,54 @@
+{
+  "realm": "vinabeef",
+  "enabled": true,
+  "displayName": "VinaBeef (local dev placeholder - owner: Phu)",
+  "sslRequired": "none",
+  "roles": {
+    "realm": [
+      { "name": "BS", "description": "Veterinarian (synthetic)" },
+      { "name": "FM", "description": "Farm manager (synthetic)" },
+      { "name": "SA", "description": "System admin (synthetic)" },
+      { "name": "EM", "description": "Executive manager (synthetic)" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "vinabeef-mobile",
+      "name": "Flutter mobile app",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["vn.edu.hcmut.vinabeef:/oauthredirect"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    },
+    {
+      "clientId": "vinabeef-dev-cli",
+      "name": "Local smoke tests only (password grant, never for the app)",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "bs.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Bac Si",
+      "lastName": "Demo",
+      "email": "bs.demo@example.invalid",
+      "credentials": [{ "type": "password", "value": "bs-local", "temporary": false }],
+      "realmRoles": ["BS"]
+    },
+    {
+      "username": "fm.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Farm",
+      "lastName": "Manager",
+      "email": "fm.demo@example.invalid",
+      "credentials": [{ "type": "password", "value": "fm-local", "temporary": false }],
+      "realmRoles": ["FM"]
+    }
+  ]
+}

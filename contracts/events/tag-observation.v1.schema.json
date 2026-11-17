@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vinabeef.local/contracts/events/tag-observation.v1.schema.json",
+  "title": "TagObservation v1",
+  "description": "One raw RFID read reported by a reader adapter (owner: Dong A; consumers: Thong mobile TagReadSource, farm-edge gate ingress, Phuc verification). A raw observation is NOT a passage, a count change or a health record. Hardware model/SDK is not yet known: this contract and the emulator verify software behaviour only, not range, interference, frequency or physical timing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "observationId", "readerId", "readerKind", "seq", "tagId", "observedAt"],
+  "properties": {
+    "schemaVersion": { "const": "tag-observation.v1" },
+    "observationId": {
+      "description": "Stable ID of this read. A reader retransmit of the same read reuses the same ID, so consumers dedupe on it.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "readerId": {
+      "description": "Provisioned reader identity, e.g. GATE-FARM01-A or MOB-<device>.",
+      "type": "string",
+      "pattern": "^[A-Z0-9][A-Z0-9-]{2,63}$"
+    },
+    "readerKind": {
+      "description": "MOBILE = handheld scan paired to the phone app; GATE = fixed reader at a farm gate.",
+      "enum": ["MOBILE", "GATE"]
+    },
+    "seq": {
+      "description": "Monotonic per readerId, starting at 1 after reader provisioning. A jump means a gap (missed reads); a repeat with the same observationId means a retransmit.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "tagId": {
+      "description": "Raw tag value read from the ear tag (permanent RFID). Mapping to cattleId is done by the owner service, not by the reader.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "observedAt": {
+      "description": "Reader source time (RFC 3339, with offset). May drift; consumers record their own receivedAt.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "receivedAt": {
+      "description": "Optional: time the adapter received the read.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "direction": {
+      "description": "GATE readers only, and only if the hardware/antenna setup can tell direction. MOBILE scans must never carry a direction.",
+      "enum": ["IN", "OUT"]
+    }
+  },
+  "if": { "properties": { "readerKind": { "const": "MOBILE" } } },
+  "then": { "not": { "required": ["direction"] } }
+}

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Thin shim for macOS/Linux: runs scripts/dev.ps1 with host pwsh if installed,
+# otherwise inside the devshell container (pwsh + docker CLI talking to the host Docker Engine).
+# Windows: run `pwsh scripts/dev.ps1 ...` directly.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if command -v pwsh >/dev/null 2>&1; then
+  exec pwsh -NoProfile -File "$ROOT/scripts/dev.ps1" "$@"
+fi
+
+IMAGE="vinabeef-devshell:1"
+if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+  echo "Building $IMAGE (one-time, ~1 min)..." >&2
+  docker build -q -t "$IMAGE" "$ROOT/infra/devshell" >&2
+fi
+
+TTY_FLAGS=(-i)
+[ -t 0 ] && [ -t 1 ] && TTY_FLAGS=(-it)
+
+# Same absolute path inside and outside so compose bind-mount sources resolve on the host.
+exec docker run --rm "${TTY_FLAGS[@]}" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$ROOT:$ROOT" -w "$ROOT" \
+  -e VINABEEF_DEVSHELL=1 \
+  "$IMAGE" pwsh -NoProfile -File "$ROOT/scripts/dev.ps1" "$@"

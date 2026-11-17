@@ -1,0 +1,8 @@
+[
+  {
+    "name": "wan-rabbitmq",
+    "listen": "0.0.0.0:5673",
+    "upstream": "rabbitmq:5672",
+    "enabled": true
+  }
+]

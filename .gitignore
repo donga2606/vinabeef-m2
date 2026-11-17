@@ -1,0 +1,19 @@
+# local config / secrets
+.env
+*.pem
+*.key
+*.jks
+*.keystore
+local.properties
+# build output
+target/
+build/
+.dart_tool/
+.gradle/
+artifacts/*
+!artifacts/README.md
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store

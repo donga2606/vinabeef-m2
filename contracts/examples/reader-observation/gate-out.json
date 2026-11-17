@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "tag-observation.v1",
+  "observationId": "a4e3f1d2-6c7b-4e8a-9f10-3d2c1b0a9e22",
+  "readerId": "GATE-FARM01-A",
+  "readerKind": "GATE",
+  "seq": 1002,
+  "tagId": "VN-0001-000123",
+  "observedAt": "2026-11-17T17:30:12.500+07:00",
+  "direction": "OUT"
+}
