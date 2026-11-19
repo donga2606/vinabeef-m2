@@ -16,9 +16,10 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <!-- Other modules (access-policy, security-http, identity-admin, verification)
-       are added by their owners. Module count is not runtime service count. -->
+  <!-- Other modules (security-http, identity-admin, verification) are added by their owners.
+       Module count is not runtime service count. -->
   <modules>
+    <module>libs/access-policy</module>
     <module>apps/herd-health</module>
     <module>apps/farm-edge</module>
     <module>apps/movement-alert</module>

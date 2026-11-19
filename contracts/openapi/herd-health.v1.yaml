@@ -1,0 +1,322 @@
+openapi: 3.1.0
+info:
+  title: VinaBeef Herd Health API
+  version: 1.0.0
+  description: >-
+    Cattle lookup, health intent submission, durable receipts and per-record history.
+    A successful submit means the Health transaction, local source evidence and audit
+    outbox committed together. Client draft and sync states are outside this API.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: Cattle
+  - name: Health intents
+paths:
+  /api/v1/cattle:
+    get:
+      tags: [Cattle]
+      operationId: lookupCattleByRfid
+      summary: Look up one registered animal by permanent RFID
+      description: Unknown animals and animals outside the caller's current scope both return 404.
+      parameters:
+        - name: rfid
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 128
+      responses:
+        '200':
+          description: The matching animal and current canonical custody
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CattleView'
+              example:
+                cattleId: 10000000-0000-4000-8000-000000000001
+                rfid: RFID-DL-1001
+                displayName: Cow DL 1001
+                registrationStatus: ACTIVE
+                farmId: FARM-DL
+                farmName: Dak Lak
+                barnId: BARN-DL-01
+                resourceVersion: 0
+                custodyVersion: 0
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/AuthorityUnavailable'}
+  /api/v1/health-intents:
+    post:
+      tags: [Health intents]
+      operationId: submitHealthIntent
+      summary: Submit an immutable health intent
+      description: >-
+        A new accepted intent returns 201. Reusing an intentId with the same canonical
+        payload returns its stored receipt with 200 and replayed=true. Reusing the ID
+        with a different payload returns 409. A stale version or completed scheduled
+        dose is durably recorded as NEEDS_REVIEW and returns 409. Every retry and
+        receipt lookup is authorized against the current resource and current grants.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthIntentRequest'
+            example:
+              intentId: 30000000-0000-4000-8000-000000000001
+              cattleId: 10000000-0000-4000-8000-000000000001
+              type: VACCINATION
+              payload:
+                vaccineCode: FMD-BOOSTER
+                batchNumber: BATCH-2026-11
+                administeredBy: bs.demo
+              occurredAt: '2026-11-19T08:15:00Z'
+              deviceRef: tablet-barn-01
+              expectedVersion: 0
+              scheduleId: 20000000-0000-4000-8000-000000000001
+      responses:
+        '201':
+          description: New intent accepted with one durable clinical effect
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HealthReceipt'}
+              example:
+                intentId: 30000000-0000-4000-8000-000000000001
+                cattleId: 10000000-0000-4000-8000-000000000001
+                status: ACCEPTED
+                recordId: 40000000-0000-4000-8000-000000000001
+                currentVersion: 1
+                reasonCode: null
+                replayed: false
+                receivedAt: '2026-11-19T08:15:03Z'
+        '200':
+          description: Same intent ID and payload; original result returned without a new effect
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HealthReceipt'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '409':
+          description: Idempotency key or current resource/schedule conflict
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/Problem'}
+              examples:
+                payloadMismatch:
+                  value:
+                    type: about:blank
+                    title: Intent ID already used
+                    status: 409
+                    code: IDEMPOTENCY_KEY_REUSED
+                    detail: This intent ID is already bound to another payload.
+                staleVersion:
+                  value:
+                    type: about:blank
+                    title: Intent needs review
+                    status: 409
+                    code: RESOURCE_VERSION_CHANGED
+                    detail: The animal changed after the form was prepared.
+                    receipt:
+                      intentId: 30000000-0000-4000-8000-000000000002
+                      cattleId: 10000000-0000-4000-8000-000000000001
+                      status: NEEDS_REVIEW
+                      recordId: null
+                      currentVersion: 1
+                      reasonCode: RESOURCE_VERSION_CHANGED
+                      replayed: false
+                      receivedAt: '2026-11-19T08:16:00Z'
+        '422': {$ref: '#/components/responses/InvalidInput'}
+        '503': {$ref: '#/components/responses/AuthorityUnavailable'}
+  /api/v1/health-intents/{intentId}:
+    get:
+      tags: [Health intents]
+      operationId: getHealthIntentReceipt
+      summary: Read the current-authorized durable receipt for an intent
+      description: Unknown receipts and receipts outside the caller's current READ_RECEIPT scope both return 404.
+      parameters:
+        - $ref: '#/components/parameters/IntentId'
+      responses:
+        '200':
+          description: Receipt for accepted or needs-review intent
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HealthReceipt'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/AuthorityUnavailable'}
+  /api/v1/cattle/{cattleId}/health-history:
+    get:
+      tags: [Cattle]
+      operationId: getCattleHealthHistory
+      summary: Read visible health records for one animal
+      description: >-
+        Health evaluates READ_HISTORY separately for each record using its immutable
+        origin farm and current cattle custody. The response omits records the caller
+        cannot read; the caller's grant is never inferred from one row for the collection.
+        Unknown cattle IDs and cattle with no readable records return an empty page so
+        this collection endpoint does not reveal resource existence.
+      parameters:
+        - name: cattleId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: beforeVersion
+          in: query
+          required: false
+          description: Return records with a lower record version.
+          schema: {type: integer, format: int64, minimum: 1}
+        - name: limit
+          in: query
+          required: false
+          schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+      responses:
+        '200':
+          description: Per-record-authorized history page
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HealthHistoryPage'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '503': {$ref: '#/components/responses/AuthorityUnavailable'}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    IntentId:
+      name: intentId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+  schemas:
+    HealthIntentRequest:
+      type: object
+      additionalProperties: false
+      required: [intentId, type, payload, occurredAt, deviceRef, expectedVersion]
+      properties:
+        intentId: {type: string, format: uuid}
+        cattleId: {type: string, format: uuid}
+        rfid: {type: string, minLength: 1, maxLength: 128}
+        type: {$ref: '#/components/schemas/HealthRecordType'}
+        payload:
+          type: object
+          description: Type-specific immutable clinical data.
+          additionalProperties: true
+        occurredAt: {type: string, format: date-time}
+        deviceRef: {type: string, minLength: 1, maxLength: 120}
+        expectedVersion: {type: integer, format: int64, minimum: 0}
+        scheduleId: {type: string, format: uuid}
+        correctionOfRecordId: {type: string, format: uuid}
+        correctionReason: {type: string, minLength: 1, maxLength: 500}
+      oneOf:
+        - required: [cattleId]
+          not: {required: [rfid]}
+        - required: [rfid]
+          not: {required: [cattleId]}
+      allOf:
+        - oneOf:
+            - required: [correctionOfRecordId, correctionReason]
+            - not:
+                anyOf:
+                  - required: [correctionOfRecordId]
+                  - required: [correctionReason]
+    HealthRecordType:
+      type: string
+      enum: [VACCINATION, HEALTH_STATUS, TREATMENT]
+    IntentStatus:
+      type: string
+      enum: [ACCEPTED, NEEDS_REVIEW, REJECTED]
+    HealthReceipt:
+      type: object
+      additionalProperties: false
+      required: [intentId, cattleId, status, currentVersion, replayed, receivedAt]
+      properties:
+        intentId: {type: string, format: uuid}
+        cattleId: {type: string, format: uuid}
+        status: {$ref: '#/components/schemas/IntentStatus'}
+        recordId: {type: [string, 'null'], format: uuid}
+        currentVersion: {type: integer, format: int64, minimum: 0}
+        reasonCode: {type: [string, 'null']}
+        replayed: {type: boolean}
+        receivedAt: {type: string, format: date-time}
+    CattleView:
+      type: object
+      additionalProperties: false
+      required: [cattleId, rfid, displayName, registrationStatus, farmId, farmName, barnId, resourceVersion, custodyVersion]
+      properties:
+        cattleId: {type: string, format: uuid}
+        rfid: {type: string}
+        displayName: {type: string}
+        registrationStatus: {type: string, enum: [ACTIVE, INACTIVE]}
+        farmId: {type: string}
+        farmName: {type: string}
+        barnId: {type: string}
+        resourceVersion: {type: integer, format: int64}
+        custodyVersion: {type: integer, format: int64}
+    HealthRecord:
+      type: object
+      additionalProperties: false
+      required: [recordId, cattleId, recordVersion, type, payload, occurredAt, recordedAt, originFarmId]
+      properties:
+        recordId: {type: string, format: uuid}
+        cattleId: {type: string, format: uuid}
+        recordVersion: {type: integer, format: int64}
+        type: {$ref: '#/components/schemas/HealthRecordType'}
+        payload: {type: object, additionalProperties: true}
+        occurredAt: {type: string, format: date-time}
+        recordedAt: {type: string, format: date-time}
+        originFarmId: {type: string}
+        scheduleId: {type: [string, 'null'], format: uuid}
+        correctionOfRecordId: {type: [string, 'null'], format: uuid}
+        correctionReason: {type: [string, 'null']}
+    HealthHistoryPage:
+      type: object
+      additionalProperties: false
+      required: [cattleId, records]
+      properties:
+        cattleId: {type: string, format: uuid}
+        records:
+          type: array
+          items: {$ref: '#/components/schemas/HealthRecord'}
+        nextBeforeVersion: {type: [integer, 'null'], format: int64}
+    Problem:
+      type: object
+      required: [title, status, code, detail]
+      properties:
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer}
+        code: {type: string}
+        detail: {type: string}
+        receipt: {$ref: '#/components/schemas/HealthReceipt'}
+  responses:
+    Unauthenticated:
+      description: Missing or untrusted principal
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Forbidden:
+      description: Current grant denies the action or the target cannot be resolved; protected existence is not disclosed
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    NotFound:
+      description: Unknown or inaccessible cattle or intent; protected existence is not disclosed
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    InvalidInput:
+      description: Invalid request payload
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    AuthorityUnavailable:
+      description: Current identity or grant authority is unavailable; no effect is accepted
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}

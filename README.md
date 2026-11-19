@@ -71,7 +71,7 @@ curl -s -X POST localhost:8474/proxies/wan-rabbitmq -d '{"enabled":false}'   # c
 
 | Port | What |
 |---|---|
-| 8080 | herd-health API (no gateway in P0) |
+| 8080 | herd-health API (no gateway in P0): `GET /api/v1/cattle?rfid=...`, `POST /api/v1/health-intents`, `GET /api/v1/health-intents/{intentId}`, `GET /api/v1/cattle/{cattleId}/health-history` |
 | 8081 | Keycloak. Issuer `http://localhost:8081/realms/vinabeef`. Admin `admin` / see `.env` |
 | 127.0.0.1:15672 | RabbitMQ management (gate) |
 | 127.0.0.1:8474 | Toxiproxy admin API (gate) |
@@ -83,11 +83,11 @@ Android emulator: run `adb reverse tcp:8080 tcp:8080 && adb reverse tcp:8081 tcp
 ## Ownership
 
 `compose.yaml`, `infra/`, `scripts/dev.ps1`, `dev`, `contracts/events/*`, `backend/apps/farm-edge`, `backend/apps/movement-alert`, `backend/tools/reader-emulator`: Đông A (Phú reviews build).
-`backend/apps/herd-health` is a skeleton for Khánh: it boots, connects as `health_app` to its own `health` schema, and exposes `/actuator/health`. It has **no business endpoints yet**.
+`backend/apps/herd-health` implements Health API v1, its own `health` schema migrations, immutable clinical records, retry receipts, per-record history authorization and transactional source evidence. The access-policy adapter uses the policy library. Current-grant integration fails closed by default; a synthetic grant fixture is available only when `HEALTH_GRANTS_FIXTURE_ENABLED=true` is explicitly set.
 `infra/oidc/realm/vinabeef-realm.json` is a placeholder dev realm (synthetic users `bs.demo` / `fm.demo`) until Phú's realm lands.
 
 ## Not done yet
 
-- `seed` command: waits for Khánh's migrations.
+- Health demo data is inserted by versioned Flyway migrations; there is no separate seed command.
 - Security wiring (Phú), Flutter app (Thông), CI (Phú).
 - Gate: machine identity for readers, initial-count import, multi-farm/HA topology: Design-only.
