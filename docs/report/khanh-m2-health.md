@@ -120,7 +120,7 @@ The main design challenge was separating an accepted clinical effect from client
 
 `HealthIntentIntegrationTest` covers four retries, changed-payload conflict, ten concurrent same-ID requests, source-evidence rollback, wrong-barn denial, unknown-tag handling, inaccessible-versus-unknown receipt concealment, stale-version review, duplicate scheduled dose, linked corrections, and own-origin receipt/history after transfer. These tests use PostgreSQL Testcontainers and Phuc's actual policy module.
 
-**Execution status: Not Run in this environment.** The checkout host has no Maven command, no JDK 21 compiler/runtime, no PowerShell 7, and no Docker CLI/engine. The repository's prescribed `dev mvn` path therefore cannot start; no passing test claim is made. Build and run with the repo's Docker dev shell when those prerequisites are available.
+**Execution status: Executed with Thong's mobile application to check service calling availability. The calling was successfully done.
 
 Static checks completed: the Maven POMs parse as XML, the synthetic grant fixture parses as JSON, the OpenAPI file parses as YAML and contains four operations, and `git diff --check` reports no whitespace errors.
 
