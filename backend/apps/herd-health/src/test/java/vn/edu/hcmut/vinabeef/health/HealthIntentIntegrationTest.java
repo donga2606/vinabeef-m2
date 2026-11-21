@@ -2,6 +2,7 @@ package vn.edu.hcmut.vinabeef.health;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,6 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,7 +60,8 @@ class HealthIntentIntegrationTest {
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17.7")
             .withDatabaseName("vinabeef")
             .withUsername("health_app")
-            .withPassword("health-local");
+            .withPassword("health-local")
+            .withUrlParam("currentSchema", "health");
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry properties) {
@@ -179,10 +182,12 @@ class HealthIntentIntegrationTest {
                     RecordType.HEALTH_STATUS, "{\"observation\":\"normal\"}",
                     Instant.parse("2026-11-19T08:00:00Z"), "tablet-barn-01", 0, null, null, null);
             authenticate();
-            assertThrows(RuntimeException.class, () -> health.submit(submission));
+            DataAccessException failure = assertThrows(DataAccessException.class, () -> health.submit(submission));
+            assertTrue(failure.getMostSpecificCause().getMessage().contains("injected evidence failure"));
             assertEquals(0, count("health_intent"));
             assertEquals(0, count("operation_receipt"));
             assertEquals(0, count("clinical_record"));
+            assertEquals(0, count("source_evidence"));
             assertEquals(0, count("health_audit_outbox"));
             assertEquals(0, jdbc.queryForObject("SELECT resource_version FROM cattle WHERE cattle_id = ?", Integer.class, CATTLE_1));
         } finally {
@@ -288,7 +293,7 @@ class HealthIntentIntegrationTest {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.records.length()").value(1))
                 .andExpect(jsonPath("$.records[0].originFarmId").value("FARM-DL"));
         mockMvc.perform(get("/api/v1/cattle").param("rfid", "RFID-DL-1001"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound()); // Outside-scope RFID lookup returns 404 per OpenAPI.
     }
 
     private String vaccinationRequest(UUID intentId, long expectedVersion) throws Exception {
