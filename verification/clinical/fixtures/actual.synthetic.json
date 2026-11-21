@@ -1,0 +1,30 @@
+{
+  "formatVersion": "clinical-verification/1",
+  "kind": "actual",
+  "fixtureId": "clinical-small-v1",
+  "dataKind": "SYNTHETIC",
+  "notes": "Hand-authored positive checker control. NOT exported from Health or a real database. Repeated receipt observations do not create additional clinical effects.",
+  "effects": [
+    {
+      "effectId": "E-101", "intentId": "I-01", "actorId": "BS-A", "cattleId": "CA", "originFarmId": "FA",
+      "payload": { "procedureCode": "PROC-DEMO-A", "batchId": "LOT-DEMO-A", "doseOrdinal": 1 }
+    },
+    {
+      "effectId": "E-102", "intentId": "I-02", "actorId": "FM-A", "cattleId": "CB", "originFarmId": "FA",
+      "payload": { "procedureCode": "PROC-DEMO-B", "batchId": "LOT-DEMO-B", "doseOrdinal": 1 }
+    }
+  ],
+  "sourceEvidence": [
+    { "evidenceId": "S-101", "effectId": "E-101", "intentId": "I-01", "kind": "CLINICAL_ACCEPTED" },
+    { "evidenceId": "S-102", "effectId": "E-102", "intentId": "I-02", "kind": "CLINICAL_ACCEPTED" }
+  ],
+  "outcomes": [
+    { "observationId": "O-01", "attemptId": "A-01", "intentId": "I-01", "outcome": "ACCEPTED", "effectId": "E-101" },
+    { "observationId": "O-02", "attemptId": "A-02", "intentId": "I-01", "outcome": "ACCEPTED", "effectId": "E-101" },
+    { "observationId": "O-02-RECEIPT", "attemptId": "A-02", "intentId": "I-01", "outcome": "ACCEPTED", "effectId": "E-101" },
+    { "observationId": "O-03", "attemptId": "A-03", "intentId": "I-01", "outcome": "CONFLICT", "effectId": null },
+    { "observationId": "O-04", "attemptId": "A-04", "intentId": "I-02", "outcome": "ACCEPTED", "effectId": "E-102" },
+    { "observationId": "O-05", "attemptId": "A-05", "intentId": "I-03", "outcome": "DENIED", "effectId": null },
+    { "observationId": "O-06", "attemptId": "A-06", "intentId": "I-04", "outcome": "CONFLICT", "effectId": null }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "formatVersion": "clinical-verification/1",
+  "kind": "expected",
+  "fixtureId": "clinical-small-v1",
+  "notes": "Hand-authored verification oracle. Synthetic identifiers/procedures, not production seed, accepted Health API or clinical guidance.",
+  "intents": [
+    {
+      "intentId": "I-01", "actorId": "BS-A", "cattleId": "CA", "originFarmId": "FA",
+      "payload": { "procedureCode": "PROC-DEMO-A", "batchId": "LOT-DEMO-A", "doseOrdinal": 1 },
+      "expectedEffectCount": 1, "requiredEvidenceKinds": ["CLINICAL_ACCEPTED"]
+    },
+    {
+      "intentId": "I-02", "actorId": "FM-A", "cattleId": "CB", "originFarmId": "FA",
+      "payload": { "procedureCode": "PROC-DEMO-B", "batchId": "LOT-DEMO-B", "doseOrdinal": 1 },
+      "expectedEffectCount": 1, "requiredEvidenceKinds": ["CLINICAL_ACCEPTED"]
+    },
+    {
+      "intentId": "I-03", "actorId": "BS-A", "cattleId": "CC", "originFarmId": "FB",
+      "payload": { "procedureCode": "PROC-DEMO-A", "batchId": "LOT-DEMO-A", "doseOrdinal": 1 },
+      "expectedEffectCount": 0, "requiredEvidenceKinds": []
+    },
+    {
+      "intentId": "I-04", "actorId": "FM-A", "cattleId": "CA", "originFarmId": "FA",
+      "payload": { "procedureCode": "PROC-DEMO-C", "batchId": "LOT-DEMO-C", "doseOrdinal": 1 },
+      "expectedEffectCount": 0, "requiredEvidenceKinds": []
+    }
+  ],
+  "attempts": [
+    {
+      "attemptId": "A-01", "intentId": "I-01", "expectedOutcome": "ACCEPTED",
+      "request": { "actorId": "BS-A", "cattleId": "CA", "payload": { "procedureCode": "PROC-DEMO-A", "batchId": "LOT-DEMO-A", "doseOrdinal": 1 } },
+      "scenario": "First current-scope write; R2 M05."
+    },
+    {
+      "attemptId": "A-02", "intentId": "I-01", "expectedOutcome": "ACCEPTED",
+      "request": { "actorId": "BS-A", "cattleId": "CA", "payload": { "procedureCode": "PROC-DEMO-A", "batchId": "LOT-DEMO-A", "doseOrdinal": 1 } },
+      "scenario": "Same-intent same-content retry/resolution; R2 M20/M26c. Exactly one durable effect across attempts."
+    },
+    {
+      "attemptId": "A-03", "intentId": "I-01", "expectedOutcome": "CONFLICT",
+      "request": { "actorId": "BS-A", "cattleId": "CA", "payload": { "procedureCode": "PROC-DEMO-A", "batchId": "LOT-CHANGED", "doseOrdinal": 1 } },
+      "scenario": "Same intent, changed payload, still current scope. Permission ALLOW; Health conflict, original effect unchanged; R2 M21a."
+    },
+    {
+      "attemptId": "A-04", "intentId": "I-02", "expectedOutcome": "ACCEPTED",
+      "request": { "actorId": "FM-A", "cattleId": "CB", "payload": { "procedureCode": "PROC-DEMO-B", "batchId": "LOT-DEMO-B", "doseOrdinal": 1 } },
+      "scenario": "Independent current-farm write; R2 M06."
+    },
+    {
+      "attemptId": "A-05", "intentId": "I-03", "expectedOutcome": "DENIED",
+      "request": { "actorId": "BS-A", "cattleId": "CC", "payload": { "procedureCode": "PROC-DEMO-A", "batchId": "LOT-DEMO-A", "doseOrdinal": 1 } },
+      "scenario": "BS FA/BA targets canonical CC FB/BC outside scope. Zero effect; R2 M07/M21b scope projection. Boundary must arrange real authority."
+    },
+    {
+      "attemptId": "A-06", "intentId": "I-04", "expectedOutcome": "CONFLICT",
+      "request": { "actorId": "FM-A", "cattleId": "CA", "payload": { "procedureCode": "PROC-DEMO-C", "batchId": "LOT-DEMO-C", "doseOrdinal": 1 } },
+      "scenario": "New acceptance with stale expected custody v6 vs canonical v7, still in farm. Permission ALLOW; Health version guard, zero effect; R2 M26a. Version setup is a future owner hook, not inferred by checker."
+    }
+  ]
+}
