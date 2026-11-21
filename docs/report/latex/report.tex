@@ -1,6 +1,7 @@
 % 'draft' mode can be used to speed up compilation
 \documentclass[final]{hcmut-report}
-\usepackage{codespace}
+% The report uses listings for commands and does not require minted.
+\usepackage{listings}
 
 % Full T5 (Vietnamese) glyph coverage
 \usepackage{lmodern}
@@ -9,11 +10,11 @@
 % https://github.com/callegar/LaTeX-draftwatermark
 
 % Encodings
-\usepackage{gensymb,textcomp}
+\usepackage{textcomp}
 
 % Better tables
 % Wide tables go to https://tex.stackexchange.com/q/332902
-\usepackage{array,longtable,multicol,multirow,siunitx,tabularx}
+\usepackage{array,longtable,tabularx}
 
 % Better enum
 \usepackage{enumitem}
@@ -21,22 +22,9 @@
 % Graphics
 \usepackage{caption,float}
 
-% Add options for figures, like max width, framing, etc.
-\usepackage[export]{adjustbox}
-
 % References
 % Use \Cref{} instead of \ref{}
 \usepackage[nameinlink]{cleveref}
-
-% FOR DEMONSTRATION PURPOSES, REMOVE IN PRODUCTION
-\usepackage{mwe}
-
-% FOR ADDING TABLE
-\usepackage{placeins}
-
-% Diagrams
-\usepackage{tikz}
-\usetikzlibrary{positioning}
 
 % Sub-preambles
 % https://github.com/MartinScharrer/standalone
@@ -70,10 +58,6 @@
 
 % Custom commands
 %\newcommand*\mean[1]{\bar{#1}}
-
-% TikZ for diagrams
-\usepackage{tikz}
-\usetikzlibrary{positioning}
 
 \begin{document}
 \nocite{assignmentM1,chapter1,chapter3,chapter4,chapter5,rabbitmq,pgAsyncCommit,rfc9110,awsRetries,owaspAuthz,owaspLogging,awsOutbox,seiQAW,c4model,richardsStyles,nygardADR,ibmActors}
@@ -145,6 +129,7 @@
 \input{chaps/05-architecture-decisions.tex}
 \input{chaps/06-design-principles.tex}
 \input{chaps/07-traceability.tex}
+\input{chaps/m2-health-verification.tex}
 \input{chaps/08-conclusion.tex}
 \clearpage
 
