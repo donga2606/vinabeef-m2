@@ -1,0 +1,34 @@
+{
+  "subjects": [
+    {
+      "subjectId": "bs.demo",
+      "grants": [
+        {
+          "reference": "grant-bs-farm-dl-barn-01",
+          "role": "BS",
+          "farmId": "FARM-DL",
+          "barnIds": ["BARN-DL-01"],
+          "status": "ACTIVE",
+          "validFrom": "2026-01-01T00:00:00Z",
+          "validUntil": null,
+          "version": 1
+        }
+      ]
+    },
+    {
+      "subjectId": "fm.demo",
+      "grants": [
+        {
+          "reference": "grant-fm-farm-dl",
+          "role": "FM",
+          "farmId": "FARM-DL",
+          "barnIds": [],
+          "status": "ACTIVE",
+          "validFrom": "2026-01-01T00:00:00Z",
+          "validUntil": null,
+          "version": 1
+        }
+      ]
+    }
+  ]
+}
