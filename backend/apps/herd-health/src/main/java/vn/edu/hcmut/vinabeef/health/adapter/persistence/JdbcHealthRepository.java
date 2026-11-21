@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -124,7 +126,7 @@ public class JdbcHealthRepository implements HealthRepository {
                 .param("scheduleId", submission.scheduleId())
                 .param("correctionOf", submission.correctionOfRecordId())
                 .param("correctionReason", submission.correctionReason())
-                .param("createdAt", now)
+                .param("createdAt", now.atOffset(ZoneOffset.UTC))
                 .query((rs, ignored) -> rs.getObject(1, UUID.class))
                 .optional()
                 .isPresent();
@@ -186,6 +188,7 @@ public class JdbcHealthRepository implements HealthRepository {
     public void completeIntent(HealthIntentSubmission submission, String payloadHash, String actorSub,
                                CattleResource submittedCattle, HealthReceipt receipt, int httpStatus,
                                ClinicalRecord newRecord, Instant now) {
+        OffsetDateTime databaseTime = now.atOffset(ZoneOffset.UTC);
         if (newRecord != null) insertClinicalRecord(submission.intentId(), newRecord);
 
         if (newRecord != null && newRecord.scheduleId() != null) {
@@ -195,7 +198,7 @@ public class JdbcHealthRepository implements HealthRepository {
                         VALUES (:scheduleId, :recordId, :completedAt)
                         """).param("scheduleId", newRecord.scheduleId())
                         .param("recordId", newRecord.recordId())
-                        .param("completedAt", now)
+                        .param("completedAt", databaseTime)
                         .update();
             } else {
                 int updated = jdbc.sql("""
@@ -203,7 +206,7 @@ public class JdbcHealthRepository implements HealthRepository {
                         SET effective_record_id = :recordId, completed_at = :completedAt
                         WHERE schedule_id = :scheduleId AND effective_record_id = :previousRecordId
                         """).param("recordId", newRecord.recordId())
-                        .param("completedAt", now)
+                        .param("completedAt", databaseTime)
                         .param("scheduleId", newRecord.scheduleId())
                         .param("previousRecordId", newRecord.correctionOfRecordId())
                         .update();
@@ -232,7 +235,7 @@ public class JdbcHealthRepository implements HealthRepository {
                 .param("intentId", submission.intentId())
                 .param("httpStatus", httpStatus)
                 .param("response", writeJson(receipt))
-                .param("createdAt", now)
+                .param("createdAt", databaseTime)
                 .update();
 
         UUID evidenceId = stableId("health-source-evidence:" + submission.intentId());
@@ -253,7 +256,7 @@ public class JdbcHealthRepository implements HealthRepository {
                 .param("barnId", submittedCattle.barnId())
                 .param("payloadHash", payloadHash)
                 .param("outcome", receipt.status().name())
-                .param("capturedAt", now)
+                .param("capturedAt", databaseTime)
                 .update();
 
         UUID eventId = stableId("health-audit-event:" + submission.intentId());
@@ -264,7 +267,7 @@ public class JdbcHealthRepository implements HealthRepository {
                 .param("eventId", eventId)
                 .param("intentId", submission.intentId())
                 .param("payload", auditPayload(eventId, actorSub, submittedCattle, payloadHash, receipt, newRecord))
-                .param("createdAt", now)
+                .param("createdAt", databaseTime)
                 .update();
     }
 
@@ -286,8 +289,8 @@ public class JdbcHealthRepository implements HealthRepository {
                 .param("version", record.recordVersion())
                 .param("type", record.type().name())
                 .param("payload", record.payloadJson())
-                .param("occurredAt", record.occurredAt())
-                .param("recordedAt", record.recordedAt())
+                .param("occurredAt", record.occurredAt().atOffset(ZoneOffset.UTC))
+                .param("recordedAt", record.recordedAt().atOffset(ZoneOffset.UTC))
                 .param("deviceRef", record.deviceRef())
                 .param("originFarmId", record.originFarmId())
                 .param("scheduleId", record.scheduleId())
