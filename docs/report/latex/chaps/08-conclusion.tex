@@ -5,23 +5,26 @@ driving characteristics: Reliability/Durability, Performance and
 Security/Auditability. Availability is a supporting characteristic with
 its own NFR, success criterion and scenario. A comparison of concrete
 variants led to a service-based central backend with a gate core at
-each farm:
+each farm. The design calls for:
 
 \begin{itemize}
 \item
-  each gate read is committed at the farm within the two-second
-  deadline, with no WAN or central dependency on its path;
+  each gate read to commit at the farm within the two-second deadline,
+  with no WAN or central dependency on its path;
 \item
-  committed facts are relayed to the central services as events, at
-  least once and without duplicate effects;
+  committed facts to be relayed to the central services as events, at
+  least once, with one business effect per intent;
 \item
-  each service enforces role and scope on the resources it owns and
-  commits audit evidence with every change.
+  each service to enforce role and scope on the resources it owns and
+  commit the required audit evidence with each covered change.
 \end{itemize}
 
 The views, commit boundaries, role and custody policy, and
 external-submission model form one consistent design, recorded in twelve
 architecture decisions and supported by the design principles in
-\Cref{sec:6}. Milestone 2 will implement this design and verify it
-against the success criteria and quality attribute scenarios in
-\Cref{sec:3}.
+\Cref{sec:6}. In the M2 Health slice, the service integrated the
+authorization policy and exercised retry, scope, and
+source-evidence rollback against PostgreSQL.
+\Cref{sec:m2-health-results} records the test results and remaining
+mobile and identity integration checks. The other architecture
+criteria in \Cref{sec:3} retain their own verification scope.

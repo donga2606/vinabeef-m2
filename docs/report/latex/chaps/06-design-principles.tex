@@ -41,3 +41,33 @@ implementations. & NFR-08, QAS08 \\ \hline
   \item Observability: structured logs, metrics and reader heartbeats; every log and audit record carries an operation or correlation ID.
   \item Keep it simple: add a service or a technology only when a driving characteristic requires it.
 \end{itemize}
+
+\subsection{Applied SOLID in Health Authorization}\label{sec:m2-health-solid}
+
+\textbf{Single Responsibility.} The Java policy evaluates grants against
+the action and resource supplied by Health. The application service
+enforces the decision and coordinates acceptance, retry and audit
+evidence within the Health transaction. A change to a scope rule can
+be exercised in policy tests. A change to storage or transaction
+behavior is exercised through the Health backend.
+
+\textbf{Dependency Inversion.} Health's application layer calls
+\texttt{AccessPolicyPort}. The concrete adapter maps Health's principal,
+grant and resource types to the library. The policy rules are testable
+without Spring or PostgreSQL. Running the integrated slice verifies
+that the adapter supplies the right context and Health enforces the
+decision. \Cref{sec:m2-health-auth,sec:m2-health-results} describes both
+levels of verification.
+
+\subsection{Reflection on the Health Slice}\label{sec:m2-health-reflection}
+
+The PostgreSQL suite exposed a failure that the policy unit tests could
+not exercise. The JDBC driver could not bind a Java \texttt{Instant}
+directly to a timestamp parameter during a clinical write. Converting
+the timestamp to an offset date-time at the JDBC boundary preserved
+the domain model and the authorization contract. The rollback test
+also checks that its exception came from the injected source-evidence
+insert failure before it checks the database state. That assertion
+matters because an unrelated error early in the write could also
+leave zero rows. These two checks show why policy unit tests and
+database integration tests both belong in the verification plan.

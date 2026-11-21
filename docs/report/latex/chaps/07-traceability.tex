@@ -1,9 +1,11 @@
 \section{Traceability}\label{sec:7}
 
 Each requirement is traced to the logical components of \Cref{sec:4.4}, the
-decisions of \Cref{sec:5}, and how it is verified: a use case of \Cref{app:A}
+decisions of \Cref{sec:5}, and its verification criteria: a use case of \Cref{app:A}
 or an acceptance-criteria group of \Cref{sec:2.1.2} for functional
 requirements, a scenario (\Cref{sec:3.4}) and a success criterion (\Cref{sec:3.2}) for non-functional ones.
+The exercised M2 Health cases and their outcomes are listed in
+\Cref{tab:m2-health-cases}.
 
 \subsection{Functional Requirements}\label{sec:7.1}
 
@@ -27,11 +29,13 @@ Registry & ADR-05, ADR-07, ADR-12 & UC Record Cattle Movement \\ \hline
 FR-13 to FR-15 Missing, unexpected, wrong-barn alerts & Alerting, Edge
 Gateway & ADR-04, ADR-11, ADR-12 & UC Detect \& Handle Abnormalities \\ \hline
 FR-16 to FR-17 Vaccination, health, treatment & Health Records & ADR-03,
-ADR-04, ADR-05, ADR-08 & UC Manage Animal Health; schedule/completion
-fixture; QAS05 \\ \hline
+ADR-04, ADR-05, ADR-08 & UC Manage Animal Health, QAS05/QAS09.
+Backend retry, version and scheduled-dose cases in \Cref{sec:m2-health-results}
+\\ \hline
 FR-18 Profile and history timeline & Health Records, Cattle Registry,
-Movement Processing & ADR-07, ADR-08, ADR-09 & UC Manage Animal Health;
-authorized complete-history query \\ \hline
+Movement Processing & ADR-07, ADR-08, ADR-09 & UC Manage Animal Health.
+Health receipt and origin-history cases in \Cref{tab:m2-health-cases}
+\\ \hline
 FR-19 to FR-20 Reports and export & Reporting & ADR-07, ADR-08, ADR-09 &
 UC Generate Reports \& Monitoring \\ \hline
 FR-21 National API submission & Integration Gateway & ADR-06 & UC
@@ -59,13 +63,16 @@ NFR-01 Performance & D-02 & Edge Gateway, Movement Processing, Head
 Count & ADR-01, ADR-02, ADR-11 & QAS01; SC-01 \\ \hline
 NFR-02 Reliability and durability & D-01 & Edge Gateway, Movement
 Processing, Head Count, Health Records & ADR-03, ADR-04, ADR-05, ADR-08
-& QAS03, QAS05; SC-02 \\ \hline
+& QAS03, QAS05, QAS09, SC-02. Health retry and version (T06)
+\\ \hline
 NFR-03 Availability and continuity & secondary & Edge Gateway,
 Alerting & ADR-02, ADR-11, ADR-12 & QAS02; SC-03 \\ \hline
 NFR-04 Security & D-03 & Identity \& Access and every resource-owning
-component & ADR-07, ADR-12 & QAS04; SC-04 \\ \hline
+component & ADR-07, ADR-12 & QAS04, QAS10, SC-04. Health scope and
+protected reads (T07) \\ \hline
 NFR-05 Auditability & D-03 & Audit and every owner of covered changes or
-sensitive access & ADR-05, ADR-08 & QAS05; SC-05 \\ \hline
+sensitive access & ADR-05, ADR-08 & QAS05, SC-05. Health evidence and
+rollback (T08) \\ \hline
 NFR-06 Interoperability & --- & Integration Gateway & ADR-06 & QAS06;
 SC-06 \\ \hline
 NFR-07 Scalability and configurability & --- & Device Management, Cattle

@@ -45,8 +45,9 @@ processing.
 \subsection{Success Criteria}\label{sec:3.2}
 
 Each criterion combines its characteristic, source, measurable outcome
-and planned verification. These are M1 design contracts; implementation
-acceptance remains planned for M2.
+and planned verification. The M1 criteria remain design contracts.
+\Cref{sec:m2-health-results} records the subset exercised in the M2
+Health backend.
 
 {\small
 \begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.2426\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|}
@@ -150,10 +151,12 @@ compares styles through concrete variants against these three drivers.
 \subsection{Quality Attribute Scenarios}\label{sec:3.4}
 
 Each scenario contains Source, Stimulus, Environment, Artifact, Response
-and Response Measure, following the SEI formulation. The first
-six address operational risks; the last two cover configuration and
-adapter changes. All are Planned / Not Run. Fixture budgets are project-defined (P), and passing one measure does not compensate for failing
-another.
+and Response Measure, following the SEI formulation. QAS01--08 retain
+the M1 scenarios. QAS09 and QAS10 extend them for on-site mobile
+recording, where intermittent connectivity and cattle identification
+errors can interrupt a clinical workflow.\cite{assignmentM2} Fixture
+budgets are project-defined (P). \Cref{tab:m2-health-cases} records the
+specific backend cases exercised in M2.
 
 \subsubsection{QAS01 Correct and Timely Gate Processing}\label{sec:3.4.1}
 
@@ -380,3 +383,79 @@ outcomes \\ \hline
 
 Trace: NFR-08; SC-08; AC-08 and SOLID. Domain-semantic changes need
 separate analysis; absent implementation produces Not Run.
+
+\newpage
+\subsubsection{QAS09 Mobile Capture and Restart}\label{sec:qas09}
+
+{\small
+\begin{longtable}{|p{0.19\linewidth}|p{0.72\linewidth}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & An authorized barn supervisor uses a mobile client and
+reader. A tester interrupts connectivity or restarts the app. \\ \hline
+Stimulus & Scan and confirm the animal, enter the clinical details, and
+attempt to save. Interrupt connectivity before or after saving, then
+reconnect and retry with the same intent ID. \\ \hline
+Environment & The tag and custody start in the verified scope. The
+client loses and regains network access. Option A follows the online-only
+baseline. Option B proposes durable local drafts during the outage. \\ \hline
+Artifact & Mobile form, local draft store and sync state, together with
+the Health intent, receipt, clinical record and source evidence. \\ \hline
+Response & Under A, the app reports that a new offline save is unavailable.
+Under B, the app reports a saved draft only after the local commit and
+restores the same cattle, actor, intent and content after restart. Upon
+reconnection, Health checks current authorization, custody and version.
+The app shows acceptance only after the server confirms the result. \\ \hline
+Response\newline Measure & Zero server acceptances during the outage and zero
+false saved or accepted states. For B, the proposed fixture restores
+20 of 20 acknowledged drafts. With unchanged rights and reconnection
+ready, the valid cohort yields 20 matching effects, receipts and evidence
+rows within 120 seconds (P), with zero duplicates or wrong-cattle effects.
+Conflicts retain their actual nonaccepted outcome. \\ \hline
+\end{longtable}
+}
+
+Trace: SC-02 and SC-05, \Cref{adr:12}, and T05/T06. Offline drafts and
+their proposed measures remain design-only pending confirmation of
+scope. The online retry controls are recorded in
+\Cref{tab:m2-health-cases}.
+
+\newpage
+\subsubsection{QAS10 Cattle Identity and Current Authorization}\label{sec:qas10}
+
+{\small
+\begin{longtable}{|p{0.19\linewidth}|p{0.72\linewidth}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & A barn supervisor or farm manager, an out-of-scope user,
+the RFID reader and an administrator who can change grants or custody. \\ \hline
+Stimulus & Scan an unknown, deactivated or ambiguous tag. Attempt a
+submission, retry, or receipt or history read after a grant or custody
+change, or submit with a stale resource version. \\ \hline
+Environment & Health is online with server-owned cattle and custody data.
+Allow and deny cases declare the caller's current grants, resource
+version and expected cattle binding. \\ \hline
+Artifact & Scan and form selection, verified principal and grants,
+canonical cattle and record context, Health policy and clinical outcome. \\ \hline
+Response & Require explicit cattle confirmation before capture. An unknown
+tag stays unresolved. A known deactivated tag still resolves to cattle
+identity and history for authorized callers, and cannot start a new
+clinical write. Each protected operation checks current rights. A
+new submission with a stale version goes to review when scope still
+allows it. A committed retry follows current receipt authorization.
+An out-of-scope lookup gives no cattle data. \\ \hline
+Response\newline Measure & Zero unauthorized effects or protected-data
+disclosures in deny cases. Unknown tags create zero cattle records.
+For allowed flows, the confirmed cattle and submitted content match
+the resulting receipt and history. A stale uncommitted intent produces
+zero clinical records, and an authorized replay produces no extra
+effect. \\ \hline
+\end{longtable}
+}
+
+Trace: SC-02, SC-04 and SC-05, \Cref{adr:07,adr:08}, and T06--T09.
+\Cref{tab:m2-health-cases} covers the backend examples exercised on
+\texttt{staging}. The mobile confirmation flow and integration with
+the real identity and grant providers remain pending.
