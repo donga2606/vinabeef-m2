@@ -1,0 +1,129 @@
+\section{Use Case Descriptions}\label{app:A}
+
+Five core use cases cover the VinaBeef business flows:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Register and Manage Cattle
+\item
+  Record Cattle Movement
+\item
+  Detect and Handle Abnormalities
+\item
+  Manage Animal Health
+\item
+  Generate Reports and Monitoring.
+\end{enumerate}
+
+Together they cover RFID identification, automated movement,
+abnormality detection, animal health and history, and reporting. The
+first table lists the actors and preconditions of each use case.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.1279\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2348\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.6073\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Use Case} & \textbf{Actors} & \textbf{Preconditions} \\ \hline
+\endhead
+\textbf{Register \& Manage Cattle} & Farm Manager
+(registration/metadata); authorized BS/FM (permitted read only) & Valid
+user identity, action and canonical farm scope; registration creates a
+previously unused permanent RFID. Physical-tag incidents cannot change
+permanent identity. \\ \hline
+\textbf{Record Cattle Movement} & RFID gate reader; BS/FM monitor
+outcomes & Qualified observation and known reader/gate binding;
+registered cattle is not a prerequisite for receiving a read. Initial
+occupancy and classification context are declared. \\ \hline
+\textbf{Detect \& Handle Abnormalities} & BS/FM receive alerts and
+acknowledge; FM resolves & An internal passage evaluator, window
+scheduler or heartbeat timer supplies the stimulus. Registration/custody
+context is versioned; unknown/stale context is provisional. \\ \hline
+\textbf{Manage Animal Health} & BS/FM within current permitted custody;
+original-farm FM approves correction & Registered cattle; current
+action/scope and expected version; clinical writes online; stable
+intent; authorized correction workflow. \\ \hline
+\textbf{Generate Reports \& Monitoring} & BS/FM scoped business reports;
+EM approved aggregates; FM approves external submission & Authorized
+dataset and current scope at execution/download. SA accesses approved
+technical/security information, not ordinary business reports or
+clinical narratives. \\ \hline
+\end{longtable}
+}
+
+The second table gives the main flow, alternative flows and
+postcondition of each use case.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.1113\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2707\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2940\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2940\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Use Case} & \textbf{Main Flow} & \textbf{Alternative Flow} & \textbf{Postcondition} \\ \hline
+\endhead
+\textbf{Register \& Manage Cattle} & FM selects registration; resource
+owner validates scope, permanent-ID uniqueness and approved barn
+assignment; atomically commit profile, receipt and source evidence.
+Metadata changes preserve identity and versioned history. & Duplicate
+permanent RFID or invalid scope $\rightarrow$ reject; invalid input
+$\rightarrow$ correct; lost/damaged tag $\rightarrow$ audited
+incident and approved identity-preserving procedure. Different RFID
+requires a separately approved extension. & Authorized
+profile/assignment is committed once; permanent identity and full
+history are retained. Read-only participation does not authorize
+registration. \\ \hline
+\textbf{Record Cattle Movement} & Receive observation; qualify
+reader/gate; classify passage/direction; use stable IDs to distinguish
+observation repeats from transport replay. Atomically commit local
+disposition, movement/count effect and evidence/outbox before success.
+Central facts/projections recover asynchronously. Transfer observations
+are linked to an approved transfer; observed location alone cannot
+change custody. & Repeated observation/same event $\rightarrow$
+durable duplicate disposition, no extra effect; unknown/deactivated tag
+$\rightarrow$ evidence and unexpected alert; inconsistent
+direction/context $\rightarrow$ explicit unresolved/provisional
+disposition; failed mandatory commit $\rightarrow$ no success. Offline
+readers are handled through heartbeat monitoring. & Correct local
+outcome is durable; valid movements and count effects occur once.
+Duplicate/invalid inputs do not create a false valid movement. Approved
+transfers preserve both origin/destination and approvals. \\ \hline
+\textbf{Detect \& Handle Abnormalities} & A passage, heartbeat timer or
+return-window timer triggers the relevant rule. At window close find OUT
+passages unmatched by later valid IN, excluding approved custody
+transfers. Commit alert/evidence; notify permitted scope. BS/FM
+acknowledge; FM performs final reasoned resolution. & OUT/IN/OUT opens a
+new return obligation; unexpected or wrong-barn input creates its
+respective alert. Stale context is provisional. Later IN re-evaluates
+open obligations; no outstanding cattle $\rightarrow$ no missing
+alert. & Alerts identify relevant cattle/window/context. Acknowledgement
+and resolution have separate guards, transitions and audit evidence;
+provisional results reconcile after synchronization. \\ \hline
+\textbf{Manage Animal Health} & BS/FM retrieves authorized complete
+history; record a vaccination schedule with vaccine, due date and
+status, or create a vaccination/treatment intent under current
+custody/expected version. Atomically commit the clinical effect, receipt
+and evidence; a completed scheduled dose links to its schedule.
+Corrections retain the original and append an approved linked version. &
+Not found/invalid input/unauthorized/out-of-scope $\rightarrow$
+reject; retry same intent $\rightarrow$ original outcome; mandatory
+source-evidence failure $\rightarrow$ rollback/no success; collector
+outage $\rightarrow$ retain outbox for later relay; clinical
+operations are online-only. & One clinical effect per successful intent,
+complete original/correction history, source evidence and authorized
+current view. \\ \hline
+\textbf{Gen\-er\-ate Reports \& Monitoring} & Recheck current role/scope;
+retrieve data through owned APIs/read models; generate scoped
+reports/dashboard and CSV/PDF/XLSX export; recheck download access. FM
+approves immutable external payload; persist intent and dispatch via
+Integration Gateway. & Empty dataset $\rightarrow$ explicit empty
+result; unauthorized/revoked access $\rightarrow$ deny. API
+unavailable/ambiguous $\rightarrow$ persisted pending/unknown,
+qualified retry or approved reconciliation. 202/found-processing is
+pending; only final acceptance completes. & Authorized report/export
+preserves record selection and scope across formats. External intent is
+retained; final, pending, unknown and rejected states remain
+distinct. \\ \hline
+\end{longtable}
+}
+
+The five use cases cover human workflows and autonomous gate/timer
+processing. They are related workflows, not a mandatory sequence in
+which every movement must be followed by a health write. Transfer and
+external delivery follow their specific approval and evidence contracts.

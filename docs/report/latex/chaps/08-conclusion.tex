@@ -1,0 +1,27 @@
+\section{Conclusion}\label{sec:8}
+
+This report analysed the VinaBeef requirements and identified three
+driving characteristics: Reliability/Durability, Performance and
+Security/Auditability. Availability is a supporting characteristic with
+its own NFR, success criterion and scenario. A comparison of concrete
+variants led to a service-based central backend with a gate core at
+each farm:
+
+\begin{itemize}
+\item
+  each gate read is committed at the farm within the two-second
+  deadline, with no WAN or central dependency on its path;
+\item
+  committed facts are relayed to the central services as events, at
+  least once and without duplicate effects;
+\item
+  each service enforces role and scope on the resources it owns and
+  commits audit evidence with every change.
+\end{itemize}
+
+The views, commit boundaries, role and custody policy, and
+external-submission model form one consistent design, recorded in twelve
+architecture decisions and supported by the design principles in
+\Cref{sec:6}. Milestone 2 will implement this design and verify it
+against the success criteria and quality attribute scenarios in
+\Cref{sec:3}.

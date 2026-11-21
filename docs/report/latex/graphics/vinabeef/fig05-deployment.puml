@@ -1,0 +1,131 @@
+@startuml fig05-deployment
+top to bottom direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 21
+skinparam ArrowFontSize 18
+skinparam ArrowColor #404040
+skinparam nodesep 22
+skinparam ranksep 38
+skinparam node {
+  BackgroundColor #FFFFFF
+  BorderColor #1F4E79
+  FontStyle bold
+}
+skinparam artifact {
+  BackgroundColor #EAF0F8
+  BorderColor #2E75B6
+  FontStyle normal
+}
+skinparam database {
+  BackgroundColor #FFF8E8
+  BorderColor #9C7A2E
+  FontStyle normal
+}
+skinparam queue {
+  BackgroundColor #F3ECFA
+  BorderColor #7A5A9E
+  FontStyle normal
+}
+skinparam legend {
+  FontSize 18
+  BackgroundColor #F2F2F2
+}
+skinparam note {
+  BackgroundColor #FFF9DB
+  BorderColor #B8A04A
+  FontSize 18
+}
+
+actor "Barn Supervisor /\nFarm Manager" as FARMUSER
+actor "Executive /\nSystem Admin" as HQUSER
+
+node "Farm site «x3»\nDak Lak / Gia Lai / Dong Nai" as FARM #EEF6EE {
+  node "RFID gate reader «device»\nIN/OUT antenna pair" as READER
+  node "Edge server «SSD + UPS»\nDocker, NTP client" as EDGE {
+    artifact "Edge Core «container»\nreader adapter (LLRP), passage/direction\nlocal movement + count, provisional alerts\noutbox relay, config cache\nleased local dashboard API" as CORE
+    database "Edge PostgreSQL\nlocal_movement, receipts,\nhead_count, evidence,\noutbox, config cache" as EDB
+  }
+  node "Farm VPN router" as FVPN
+}
+
+cloud "WAN / Internet\n(slow or interrupted)" as WAN
+
+node "Central site «company data centre or cloud»" as CENTRAL #EEF3FA {
+  node "Central VPN gateway" as CVPN
+  node "DMZ" as DMZ {
+    artifact "API Gateway «container»\nTLS termination, authentication,\ncoarse checks, web app hosting" as GW
+  }
+  node "Ops zone" as OPS {
+    artifact "Container registry\n(signed edge images)" as REG
+    artifact "Monitoring +\nlog aggregation" as MON
+  }
+  node "Private app zone «Docker hosts»" as APP {
+    artifact "Movement & Alert" as S1
+    artifact "Herd & Health\n(+ Device Management)" as S2
+    artifact "Reporting &\nIntegration" as S3
+    artifact "Identity & Admin\n(+ Audit collector,\nConfiguration)" as S4
+  }
+  node "RabbitMQ cluster «3 nodes, quorum queues»" as MQ {
+    queue "rmq-1" as Q1
+    queue "rmq-2" as Q2
+    queue "rmq-3" as Q3
+  }
+  node "Data zone" as DATA {
+    database "PostgreSQL primary\none schema + account\nper service" as PG
+    database "PostgreSQL\nsynchronous standby" as PGS
+    storage "Daily backup +\nWAL archive" as BAK
+  }
+}
+
+node "National Animal Disease\nControl System «external»" as NAT
+
+' ---- farm ----
+READER --> CORE : LLRP/TCP\nisolated farm LAN
+CORE --> EDB : JDBC\natomic local commit
+CORE --> FVPN
+FARMUSER --> CORE : HTTPS on farm LAN\nleased read-only dashboard
+FVPN .. WAN : IPsec site-to-site VPN
+WAN .. CVPN
+
+' ---- edge-initiated links through the VPN ----
+CVPN --> Q1 : (1) UP: AMQP over mTLS\npersistent msgs, publisher confirms
+CVPN --> S2 : (2) DOWN: HTTPS mTLS pull\nassignments/devices since version v
+CVPN --> S4 : (3) DOWN: HTTPS mTLS\nconfig + policy-lease refresh
+CVPN ..> REG : pull signed image\n(staged rollout)
+CVPN ..> MON : metrics / logs
+
+' ---- users ----
+FARMUSER --> GW : HTTPS
+HQUSER --> GW : HTTPS
+GW --> APP : HTTPS\nowner re-checks action/scope
+
+' ---- central ----
+APP --> MQ : AMQP publish / consume\nmanual ACK after commit
+APP --> PG : JDBC\nschema-scoped accounts
+PG --> PGS : synchronous\nreplication
+PG --> BAK : backup + WAL
+S3 --> NAT : HTTPS\ncontract-qualified retries
+
+Q1 -[hidden]right- Q2
+Q2 -[hidden]right- Q3
+
+note as EDGENOTE
+  <b>Edge recovery</b>: reader-side buffering covers an
+  edge restart where the reader supports it; a spare
+  edge box is restored from the registry image and
+  local backup; edge recovery time is tested in M2.
+  <b>Retention</b>: local history is kept until the central
+  watermark confirms it, plus 90 days, then archived.
+  <b>Baseline sizing</b>: 4 vCPU, 8 GB RAM, 256 GB SSD.
+end note
+
+FARM -[hidden]right- EDGENOTE
+
+legend bottom
+  Only the API Gateway is publicly exposed. Broker, services and databases are private;
+  farms reach central only through the site-to-site VPN, using mTLS machine identities.
+  All farm-to-central connections are edge-initiated (1 up, 2-3 down), so they work behind farm NAT.
+  No WAN, broker or external API lies on the gate completion path (<= 2 s).
+endlegend
+@enduml

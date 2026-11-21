@@ -1,0 +1,43 @@
+\section{Design Principles}\label{sec:6}
+
+Design principles are guidelines for developers. Unlike architecture
+decisions, they guide judgement rather than impose a rule.
+
+\subsection{SOLID Principles}\label{sec:6.1}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.2280\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.5092\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2328\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Principle} & \textbf{Application in VinaBeef} & \textbf{Supports} \\ \hline
+\endhead
+Single Responsibility & MovementRecorder only records movement events;
+HeadCountCalculator only maintains counts derived from them. & ADR-05
+(rebuildable counts) \\ \hline
+Open/Closed & Missing, unexpected and wrong-barn rules are AlertRule
+implementations; a new rule is a new class, not an edit to the alert
+engine. & NFR-08 \\ \hline
+Liskov Substitution & Every ReportExporter (PDF, Excel, CSV) honours the
+same contract --- same rows, same scope filter --- so any one can
+replace another without changing report generation. & NFR-04, NFR-08 \\ \hline
+Interface Segregation & ReaderEventSource and ReaderHealthMonitor are
+separate interfaces, so an adapter implements only what its reader
+supports. & FR-07, FR-08 \\ \hline
+Dependency Inversion & Domain logic depends on ReaderProtocolAdapter and
+NationalDiseaseClient interfaces, not on the LLRP or HTTP
+implementations. & NFR-08, QAS08 \\ \hline
+\end{longtable}
+}
+
+\subsection{Other Principles}\label{sec:6.2}
+
+
+\begin{itemize}
+  \item Complete at the edge, consolidate at the centre: nothing on the gate path waits on the WAN (ADR-02, ADR-11).
+  \item Persist, then acknowledge: never report success for work that is not durably committed (ADR-03).
+  \item Assume duplicates: any message or request may arrive more than once; never assume a remote receiver is idempotent unless its contract says so (ADR-04, ADR-06).
+  \item Deny by default, least privilege: each role, service and machine identity gets only the permissions it needs (ADR-07).
+  \item Evidence with the change: an audited operation and its evidence commit together (ADR-08).
+  \item Loose coupling, high cohesion: communicate through events and versioned APIs; keep logic that changes together in one service (ADR-09).
+  \item Observability: structured logs, metrics and reader heartbeats; every log and audit record carries an operation or correlation ID.
+  \item Keep it simple: add a service or a technology only when a driving characteristic requires it.
+\end{itemize}
