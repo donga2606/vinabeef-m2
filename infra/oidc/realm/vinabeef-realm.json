@@ -1,8 +1,10 @@
 {
   "realm": "vinabeef",
   "enabled": true,
-  "displayName": "VinaBeef (local dev placeholder - owner: Phu)",
+  "displayName": "VinaBeef (local dev - owner: Phu)",
   "sslRequired": "none",
+  "editUsernameAllowed": false,
+  "accessTokenLifespan": 300,
   "roles": {
     "realm": [
       { "name": "BS", "description": "Veterinarian (synthetic)" },

@@ -30,6 +30,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -88,7 +89,7 @@ class HealthIntentIntegrationTest {
 
     @AfterEach
     void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
+        TestSecurityContextHolder.clearContext();
     }
 
     @Test
@@ -311,8 +312,11 @@ class HealthIntentIntegrationTest {
         authenticate("bs.demo");
     }
 
+    // PHU-02: the API is behind the JWT filter chain. TestSecurityContextHolder is what MockMvc's
+    // security support copies into each request; it also sets SecurityContextHolder for direct service calls.
+    // Token verification itself is covered by HealthApiSecurityWebTest and HealthSecurityConfigurationTest.
     private void authenticate(String subjectId) {
-        SecurityContextHolder.getContext().setAuthentication(
+        TestSecurityContextHolder.setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(subjectId, "unused", List.of()));
     }
 

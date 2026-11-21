@@ -84,10 +84,26 @@ Android emulator: run `adb reverse tcp:8080 tcp:8080 && adb reverse tcp:8081 tcp
 
 `compose.yaml`, `infra/`, `scripts/dev.ps1`, `dev`, `contracts/events/*`, `backend/apps/farm-edge`, `backend/apps/movement-alert`, `backend/tools/reader-emulator`: Đông A (Phú reviews build).
 `backend/apps/herd-health` implements Health API v1, its own `health` schema migrations, immutable clinical records, retry receipts, per-record history authorization and transactional source evidence. The access-policy adapter uses the policy library. Current-grant integration fails closed by default; a synthetic grant fixture is available only when `HEALTH_GRANTS_FIXTURE_ENABLED=true` is explicitly set.
-`infra/oidc/realm/vinabeef-realm.json` is a placeholder dev realm (synthetic users `bs.demo` / `fm.demo`) until Phú's realm lands.
+`infra/oidc/realm/vinabeef-realm.json` (Phú) is the local dev realm: synthetic users `bs.demo` / `fm.demo`, public clients `vinabeef-mobile` (PKCE) and `vinabeef-dev-cli` (password grant, smoke tests only). herd-health verifies every `/api/**` token (signature, issuer, expiry, client) and uses the username as the principal (`HealthSecurityConfiguration`, PHU-02). `.github/workflows/ci.yml` (PHU-05) runs `mvn verify` with Testcontainers, keeps the test reports and validates compose.
+
+## Authenticated call (local, PHU-02)
+
+```bash
+echo HEALTH_GRANTS_FIXTURE_ENABLED=true >> .env    # synthetic grants, local demo only
+./dev up -Profile local
+TOKEN=$(curl -s http://localhost:8081/realms/vinabeef/protocol/openid-connect/token \
+  -d grant_type=password -d client_id=vinabeef-dev-cli -d username=bs.demo -d password=bs-local \
+  | sed -E 's/.*"access_token":"([^"]+)".*/\1/')
+curl -i "http://localhost:8080/api/v1/cattle?rfid=RFID-DL-1001"                                 # 401, no token
+curl -i -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/v1/cattle?rfid=RFID-DL-1001"  # 200, bs.demo has BARN-DL-01
+curl -i -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/v1/cattle?rfid=RFID-DL-1002"  # 404, BARN-DL-02 not granted (denial is concealed as not found)
+```
+
+Without `HEALTH_GRANTS_FIXTURE_ENABLED=true` an authenticated call returns 503 (no grant source: fail closed).
 
 ## Not done yet
 
 - Health demo data is inserted by versioned Flyway migrations; there is no separate seed command.
-- Security wiring (Phú), Flutter app (Thông), CI (Phú).
+- Flutter app (Thông).
+- Production current-grant source (PHU-03) and audit relay/collector (PHU-04): Design-only. The demo uses the synthetic grant fixture; Health writes audit facts to its own outbox only.
 - Gate: machine identity for readers, initial-count import, multi-farm/HA topology: Design-only.

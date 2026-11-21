@@ -15,6 +15,14 @@ spring:
       quiet-period: 1s
 
 health:
+  security:
+    oidc:
+      # PHU-02. Issuer = what clients see (KC_HOSTNAME); JWKS = how this container reaches Keycloak.
+      issuer: ${OIDC_PUBLIC_ISSUER:http://localhost:8081/realms/vinabeef}
+      jwk-set-uri: ${OIDC_INTERNAL_JWK_SET_URI:http://localhost:8081/realms/vinabeef/protocol/openid-connect/certs}
+      allowed-clients: ${OIDC_ALLOWED_CLIENTS:vinabeef-mobile,vinabeef-dev-cli}
+      # Keycloak username (unique per realm, not editable by default); the grant source is keyed by it.
+      principal-claim: ${OIDC_PRINCIPAL_CLAIM:preferred_username}
   authorization:
     # Explicit local-only fallback while the IAM current-grant adapter is unavailable.
     fixture-enabled: ${HEALTH_GRANTS_FIXTURE_ENABLED:false}
