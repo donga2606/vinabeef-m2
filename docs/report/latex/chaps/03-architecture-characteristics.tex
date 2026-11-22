@@ -1,0 +1,461 @@
+\section{Architecture Characteristics}\label{sec:3}
+
+\subsection{Identifying Candidate Architecture Characteristics}\label{sec:3.1}
+
+Architecture characteristics express system success criteria.
+The course requires a characteristic to concern quality beyond domain
+functionality, influence design structure and matter to system success. Candidates were extracted from explicit requirements,
+domain concerns and implicit knowledge. This
+distinguishes qualities such as Security from tactics such as RBAC, and
+Reliability from the choice of broker/database.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.3234\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.3233\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.3233\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Candidate} & \textbf{Requirement origin} & \textbf{Structural influence} \\ \hline
+\endhead
+AC-01 Performance & E per-read deadline and workload & Completion
+placement, queue scheduling and resource isolation \\ \hline
+AC-02 Reliability/durability & E movement/health no-loss; P fault
+extension & Persistence, commit/ACK boundaries, idempotency and
+correction history \\ \hline
+AC-03 Availability/continuity & I outage risk; P offline scope & Local
+processing, cached context, pending storage and recovery \\ \hline
+AC-04 Security & E RBAC; P scopes/guards & IAM, resource authorization
+and human/machine identities \\ \hline
+AC-05 Auditability & E comprehensive audit; P evidence policy & Source
+evidence, collection, protection and traceable access \\ \hline
+AC-06 Interoperability & E API exchange; I/P quality & Adapters, schema
+validation and durable submission lifecycle \\ \hline
+AC-07 Scalability/configurability & E current scale; I/P expansion &
+Resource capacity, namespaces, configuration and provisioning \\ \hline
+AC-08 Maintainability/testability & E SOLID and M2; I/P change criteria
+& Stable core interfaces, replaceable adapters and deterministic
+tests \\ \hline
+\end{longtable}
+}
+
+Availability is a Reliability sub-characteristic in the course taxonomy. It has a separate criterion here so continuity is
+measured independently of record preservation. Auditability elaborates
+Accountability and is measured separately from permission correctness.
+Semantic integrity and operational observability support these
+candidates through correct identity/count interpretation and diagnosable
+processing.
+
+\subsection{Success Criteria}\label{sec:3.2}
+
+Each criterion combines its characteristic, source, measurable outcome
+and planned verification. The M1 criteria remain design contracts.
+\Cref{sec:m2-health-results} records the subset exercised in the M2
+Health backend.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.2426\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Criterion} & \textbf{Characteristic and source} & \textbf{Measurable acceptance} & \textbf{Planned verification} \\ \hline
+\endhead
+SC-01 & Performance; E/P, NFR-01 & Every required read completes
+correctly within \(\leq\)2 seconds; zero missing outcomes or deadline
+violations & Full input/outcome reconciliation and source/completion
+timing, including uncertainty and failures \\ \hline
+SC-02 & Reliability; E/P, NFR-02 & Zero missing committed
+movement/health IDs or contents; no duplicate business effects within
+the declared envelope & Input/history comparison; uncertain-response and
+crash/replay controls \\ \hline
+SC-03 & Availability; I/P, NFR-03 & Local gate core survives the
+60-minute test; its backlog completes within 600 seconds of
+recovery-ready while live traffic continues & Outage/live cohort IDs,
+local timing, backlog and final central effects/evidence \\ \hline
+SC-04 & Security; E/P, NFR-04 & All expected-deny cases reject without
+protected disclosure or unauthorized effects; authorized controls
+succeed & Role/action matrix plus wrong-scope, revocation, transfer and
+export checks \\ \hline
+SC-05 & Auditability; E/P, NFR-05 & Valid durable source evidence for
+100\% of covered committed operations; required access events covered;
+complete canonical set after recovery & Expected ID/content manifests;
+source/collector faults and protected access controls \\ \hline
+SC-06 & Interoperability; E/I/P, NFR-06 & Zero lost persisted intents;
+valid approved payloads; no unsafe retries; completion requires
+contractual acceptance evidence & API mocks for final success, 202, rate
+limits and timeout-after-effect \\ \hline
+SC-07 & Scalability; E/I/P, NFR-07 & Current dataset and declared
+workload supported; compatible additions need zero core-rule edits and
+preserve scopes/data & Dataset/load checks and preapproved
+configuration-change demonstration \\ \hline
+SC-08 & Maintainability; I/P, NFR-08 & Two compatible reader/API adapter
+changes need zero core-rule edits; relevant contract/regression tests
+pass & Frozen core-file diffs, interface review and repeatable domain
+tests \\ \hline
+\end{longtable}
+}
+
+Record reconciliation compares identities and contents, since matching
+totals can hide a missing record and a duplicate. Availability recovery
+is complete when the declared business/projection/evidence stages finish
+the outage cohort; an empty queue alone is insufficient. External mock
+results establish only the declared mock contract, not real National API
+compatibility.
+
+\subsection{Driving Characteristics}\label{sec:3.3}
+
+The three driving characteristics are D-01 Reliability / Durability, D-02
+Performance and D-03 Security / Auditability. Each combines a mandatory
+outcome with independent structural consequences, and the course
+recommends prioritization and keeping the primary list short. All three
+are rated High importance and High difficulty: failing any of them
+violates a mandatory requirement, and their interactions shape
+persistence, timing and authorization. These ratings are design
+assessments, not measured results.
+
+\subsubsection{D01 Reliability and Durability}\label{sec:3.3.1}
+
+Lost or duplicated movements corrupt counts, while lost health records
+undermine complete profiles. This driver requires durable ownership,
+atomic local effects/evidence, stable operation identities and preserved
+correction history. It therefore affects stores, communication contracts
+and recovery responsibilities. Additional writes, storage and
+reconciliation are the trade-offs. Confirmation and ACK must match the
+stage actually completed.
+
+\subsubsection{D02 Performance}\label{sec:3.3.2}
+
+The two-second deadline influences where gate processing completes and
+which dependencies lie on its critical path. A low average passage rate
+cannot rule out burst queues. Performance therefore remains a primary
+driver even when average throughput seems modest.
+
+The selected design completes the gate outcome locally and handles
+central synchronization, reports and external delivery separately.
+CPU/storage contention still requires resource control; local placement
+alone proves no timing guarantee. The trade-off is balancing durable
+work, concurrency and operating resources while retaining correctness
+and audit. This requirement does not independently mandate
+microservices.
+
+\subsubsection{D03 Security and Auditability}\label{sec:3.3.3}
+
+RBAC and comprehensive audit affect all protected operations. This
+driver determines identity/resource boundaries, authorization placement,
+workflow approvals and evidence ownership. Its costs include
+authorization and durable-evidence work and restricted offline human
+operations. Permission correctness and audit completeness remain
+separate measures even though they share a driver group.
+
+Availability remains significant for the selected edge/offline design,
+with its own NFR, criterion and scenario. It is outside the primary
+three because the assignment gives a mandatory timing constraint but no
+outage duration or production availability target. Distributed styles
+introduce latency, consistency and failure trade-offs, so \Cref{sec:4}
+compares styles through concrete variants against these three drivers.
+
+\subsection{Quality Attribute Scenarios}\label{sec:3.4}
+
+Each scenario contains Source, Stimulus, Environment, Artifact, Response
+and Response Measure, following the SEI formulation. QAS01--08 retain
+the M1 scenarios. QAS09 and QAS10 extend them for on-site mobile
+recording, where intermittent connectivity and cattle identification
+errors can interrupt a clinical workflow.\cite{assignmentM2} Fixture
+budgets are project-defined (P). \Cref{tab:m2-health-cases} records the
+specific backend cases exercised in M2.
+
+\subsubsection{QAS01 Correct and Timely Gate Processing}\label{sec:3.4.1}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.4849\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.4851\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & Qualified RFID reader or emulator with independently known
+inputs, direction and source timing \\ \hline
+Stimulus & Approximately 200 cattle pass one farm' s
+gates in 30 minutes; declare raw-read multiplicity and burst schedule \\ \hline
+Environment & Normal operation, healthy edge/storage, valid context and
+current-scale dataset; resources declared \\ \hline
+Artifact & Reader adapter and local movement/count/evidence
+processing \\ \hline
+Response & Commit each correct logical movement once; retain valid
+duplicate/invalid-input dispositions and corresponding count effects \\ \hline
+Response Measure & Every required read completes within \(\leq\)2
+seconds from source creation, including clock uncertainty; zero
+missing/incorrect outcomes or duplicate effects \\ \hline
+\end{longtable}
+}
+
+Trace: NFR-01/02/05; SC-01/02/05; D-02 and D-01. Repeated observations
+do not automatically represent additional cattle passages.
+
+\subsubsection{QAS02 WAN Outage and Recovery}\label{sec:3.4.2}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.4849\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.4851\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & Network fault controller with provisioned reader/worker
+identities \\ \hline
+Stimulus & Disconnect central connectivity for 60 minutes; generate 400
+valid movements/farm and restore services while live traffic
+continues \\ \hline
+Environment & Test with healthy local power/storage, sufficient
+buffer and valid cached context \\ \hline
+Artifact & Edge gate core/pending storage, Sync and central
+business/count/evidence stages \\ \hline
+Response & Continue local processing, identify stale context, retain
+pending work and replay safely without blocking live gate processing \\ \hline
+Response Measure & Preserve all 400 movements/farm without duplicate
+effects; local reads retain SC-01; outage cohort finishes within 600
+seconds of actual recovery-ready \\ \hline
+\end{longtable}
+}
+
+Trace: NFR-03/01/02; SC-03/01/02; AC-03. Offline human operations follow
+\Cref{sec:2.2.2}; three-farm testing uses 1,200 outage movements. The
+budget applies to this finite cohort.
+
+\subsubsection{QAS03 Consumer Crash and Replay}\label{sec:3.4.3}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.4849\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.4851\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & Fault controller and duplicate publisher \\ \hline
+Stimulus & Crash after store commit but before ACK, restart and replay
+the same 100 distinct normalized movement IDs \\ \hline
+Environment & Intact storage; 100 distinct registered cattle initially
+outside the barn; initial count zero; no new input. Repeat for
+separately stored projections. \\ \hline
+Artifact & Movement/count transactions, idempotency markers and required
+source evidence \\ \hline
+Response & Return the existing committed outcome; each store protects
+its own marker/effect/evidence and acknowledges after commit \\ \hline
+Response Measure & Exactly 100 IN movement/count effects and final count
+100; zero missing/extra effects or required canonical facts within a
+60 seconds of actual consumer recovery-ready \\ \hline
+\end{longtable}
+}
+
+Trace: NFR-02/05; SC-02/05; D-01. Before-commit failure rolls back
+together; same ID with different content is a conflict. The 60-second
+budget is for this finite test cohort, not a production RTO or global
+transaction guarantee.
+
+\subsubsection{QAS04 Unauthorized Role or Scope}\label{sec:3.4.4}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.4849\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.4851\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & Authenticated BS/FM/SA/EM with a declared role and scope \\ \hline
+Stimulus & Request protected data or mutation outside permission:
+wrong-farm access, SA clinical write and revoked export. During WAN loss
+also attempt online-only writes/new login and local dashboard reads
+before and after lease expiry. \\ \hline
+Environment & Online: authoritative policy and known allow/deny
+fixtures. Offline: declared cached grant/scope and a known policy-lease
+expiry; central revocation is observable only after reconnection or
+lease expiry. \\ \hline
+Artifact & Resource services, history queries, report execution/download
+and audit source \\ \hline
+Response & Enforce action/resource scope at the owner. Online checks use
+current policy. Offline, only existing leased read-only dashboard access
+and provisioned machine capture remain eligible; deny online-only
+operations and expired leases. Retain required security evidence. \\ \hline
+Response Measure & All declared allow/deny decisions are correct; denied
+cases disclose no protected data and cause no unauthorized effect.
+In-scope local reads succeed before the permitted expiry and are denied
+at or after it. Online-only operations/new login fail during WAN loss;
+audit gaps remain explicit. \\ \hline
+\end{longtable}
+}
+
+Trace: NFR-04/05; SC-04/05; D-03; ADR-07/12. Test role/scope and
+online/offline boundaries; gateway checks alone are insufficient.
+Offline revocation exposure is bounded by the declared read-only lease,
+rather than assumed instantaneous.
+
+\subsubsection{QAS05 Health Write and Audit Failure}\label{sec:3.4.5}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.4849\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.4851\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & Authorized BS/FM and a fault controller \\ \hline
+Stimulus & Submit one health intent and three same-payload retries while
+either the remote collector is unavailable or required source evidence
+insertion fails \\ \hline
+Environment & Online health workflow; case A has healthy source storage,
+case B fails the mandatory source evidence step \\ \hline
+Artifact & Health version, operation receipt, source evidence/outbox and
+collector \\ \hline
+Response & A commits once with source evidence and relays later; B rolls
+back and reports no success; resolve lost responses with the same
+authorized intent \\ \hline
+Response Measure & One intended health effect after a successful commit,
+zero partial committed effects in B before repair; complete history and
+source evidence; the small canonical audit cohort completes within a
+30 seconds of collector-ready \\ \hline
+\end{longtable}
+}
+
+Trace: NFR-02/05/04; SC-02/05/04; D-01/D-03. Reauthorization and
+matching prior receipts prevent a retry from becoming a second
+treatment. The 30-second budget applies to this finite cohort, not a
+global audit-delivery SLA.
+
+\subsubsection{QAS06 Ambiguous External Delivery}\label{sec:3.4.6}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.4849\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.4851\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & External API mock and network fault controller \\ \hline
+Stimulus & Return 202, rate limits or timeout after a receiver side
+effect; provide separate contracts with and without idempotency \\ \hline
+Environment & Persisted approved intent/schema; receiver safety
+semantics explicitly declared; gate processing independent \\ \hline
+Artifact & Integration adapter, durable intent/attempt states and
+reconciliation path \\ \hline
+Response & Retain pending/unknown outcomes; respect applicable
+Retry-After and bounded retries; retry ambiguous operations only when
+contractually safe \\ \hline
+Response Measure & Zero lost intents; one receiver effect in the
+idempotent fixture; no blind ambiguous retry without safety; Delivered
+only after final business acceptance evidence \\ \hline
+\end{longtable}
+}
+
+Trace: NFR-06/02; SC-06/02; AC-06. Retry-budget exhaustion retains
+unresolved work. Mocks cannot establish actual National API
+capabilities.
+
+\subsubsection{QAS07 Compatible Configuration Growth}\label{sec:3.4.7}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.4849\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.4851\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & Deployment team using a preapproved farm/barn/reader
+provisioning package \\ \hline
+Stimulus & Add a compatible farm namespace and reader bindings through
+configuration \\ \hline
+Environment & Current three-farm dataset; synthetic additional farm,
+approved identities/scopes and allocated resources \\ \hline
+Artifact & Registry/configuration, routing, scope policy and core
+business modules \\ \hline
+Response & Validate/provision bindings, preserve existing records and
+isolate the new scope \\ \hline
+Response Measure & Zero edits to predeclared core movement/count/health
+rules; correct positive/negative scope checks; existing workload retains
+SC-01 before and after change \\ \hline
+\end{longtable}
+}
+
+Trace: NFR-07/01/04; SC-07/01/04; AC-07. This verifies compatible
+onboarding, not unlimited capacity or an undefined runtime creation
+permission.
+
+\subsubsection{QAS08 Compatible Adapter Changes}\label{sec:3.4.8}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.4849\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.4851\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & Developer in development/CI \\ \hline
+Stimulus & Independently replace a reader protocol adapter and an API
+adapter while preserving their domain-facing contracts \\ \hline
+Environment & M2 implementation, frozen core-file inventory and
+deterministic domain/contract fixtures \\ \hline
+Artifact & Adapter interfaces/configuration and core
+movement/count/health modules \\ \hline
+Response & Implement changes at the adapter boundary and run relevant
+contract/domain/regression tests \\ \hline
+Response Measure & Both compatible changes require zero core-rule edits;
+relevant tests pass and repeated deterministic fixtures yield expected
+outcomes \\ \hline
+\end{longtable}
+}
+
+Trace: NFR-08; SC-08; AC-08 and SOLID. Domain-semantic changes need
+separate analysis; absent implementation produces Not Run.
+
+\newpage
+\subsubsection{QAS09 Mobile Capture and Restart}\label{sec:qas09}
+
+{\small
+\begin{longtable}{|p{0.19\linewidth}|p{0.72\linewidth}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & An authorized barn supervisor uses a mobile client and
+reader. A tester interrupts connectivity or restarts the app. \\ \hline
+Stimulus & Scan and confirm the animal, enter the clinical details, and
+attempt to save. Interrupt connectivity before or after saving, then
+reconnect and retry with the same intent ID. \\ \hline
+Environment & The tag and custody start in the verified scope. The
+client loses and regains network access. Option A follows the online-only
+baseline. Option B proposes durable local drafts during the outage. \\ \hline
+Artifact & Mobile form, local draft store and sync state, together with
+the Health intent, receipt, clinical record and source evidence. \\ \hline
+Response & Under A, the app reports that a new offline save is unavailable.
+Under B, the app reports a saved draft only after the local commit and
+restores the same cattle, actor, intent and content after restart. Upon
+reconnection, Health checks current authorization, custody and version.
+The app shows acceptance only after the server confirms the result. \\ \hline
+Response\newline Measure & Zero server acceptances during the outage and zero
+false saved or accepted states. For B, the proposed fixture restores
+20 of 20 acknowledged drafts. With unchanged rights and reconnection
+ready, the valid cohort yields 20 matching effects, receipts and evidence
+rows within 120 seconds (P), with zero duplicates or wrong-cattle effects.
+Conflicts retain their actual nonaccepted outcome. \\ \hline
+\end{longtable}
+}
+
+Trace: SC-02 and SC-05, \Cref{adr:12}, and T05/T06. Offline drafts and
+their proposed measures remain design-only pending confirmation of
+scope. The online retry controls are recorded in
+\Cref{tab:m2-health-cases}.
+
+\newpage
+\subsubsection{QAS10 Cattle Identity and Current Authorization}\label{sec:qas10}
+
+{\small
+\begin{longtable}{|p{0.19\linewidth}|p{0.72\linewidth}|}
+\hline
+\textbf{Element} & \textbf{Specification} \\ \hline
+\endhead
+Source & A barn supervisor or farm manager, an out-of-scope user,
+the RFID reader and an administrator who can change grants or custody. \\ \hline
+Stimulus & Scan an unknown, deactivated or ambiguous tag. Attempt a
+submission, retry, or receipt or history read after a grant or custody
+change, or submit with a stale resource version. \\ \hline
+Environment & Health is online with server-owned cattle and custody data.
+Allow and deny cases declare the caller's current grants, resource
+version and expected cattle binding. \\ \hline
+Artifact & Scan and form selection, verified principal and grants,
+canonical cattle and record context, Health policy and clinical outcome. \\ \hline
+Response & Require explicit cattle confirmation before capture. An unknown
+tag stays unresolved. A known deactivated tag still resolves to cattle
+identity and history for authorized callers, and cannot start a new
+clinical write. Each protected operation checks current rights. A
+new submission with a stale version goes to review when scope still
+allows it. A committed retry follows current receipt authorization.
+An out-of-scope lookup gives no cattle data. \\ \hline
+Response\newline Measure & Zero unauthorized effects or protected-data
+disclosures in deny cases. Unknown tags create zero cattle records.
+For allowed flows, the confirmed cattle and submitted content match
+the resulting receipt and history. A stale uncommitted intent produces
+zero clinical records, and an authorized replay produces no extra
+effect. \\ \hline
+\end{longtable}
+}
+
+Trace: SC-02, SC-04 and SC-05, \Cref{adr:07,adr:08}, and T06--T09.
+\Cref{tab:m2-health-cases} covers the backend examples exercised on
+\texttt{staging}. The mobile confirmation flow and integration with
+the real identity and grant providers remain pending.

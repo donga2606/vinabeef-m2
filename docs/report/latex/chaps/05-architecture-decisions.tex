@@ -1,0 +1,327 @@
+\section{Architecture Decisions}\label{sec:5}
+
+Architecture decisions state the rules the system must follow. All
+twelve ADRs below are accepted by the group; the Compliance line of each
+ADR names the M2 scenarios and success criteria that verify it. Logical modules may share a
+deployment unit or owned schema.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.1355\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.6295\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2050\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{ADR} & \textbf{Rule} & \textbf{Drivers} \\ \hline
+\endhead
+ADR-01 & Service-based central backbone; committed gate facts are
+propagated as events & D-01, D-02, D-03 \\ \hline
+ADR-02 & Each farm runs an edge gateway; gate recording never depends on
+the WAN or on central services & D-01, D-02 \\ \hline
+ADR-03 & A read or a health write is acknowledged only after durable
+commit; delivery to central is at-least-once & D-01 \\ \hline
+ADR-04 & Every consumer and write path is idempotent on a stable
+operation ID & D-01 \\ \hline
+ADR-05 & Committed movement events and health records are never updated
+or deleted; corrections are new linked records & D-01, D-03 \\ \hline
+ADR-06 & Only the Integration Gateway calls external systems; ambiguous
+outcomes are retried automatically only where the
+receiver' s contract makes it safe & D-01 \\ \hline
+ADR-07 & Central client traffic uses the API gateway; every owner checks
+action/scope. Farm-local read-only access checks its existing session
+and unexpired scoped lease. & D-03 \\ \hline
+ADR-08 & Required audit evidence commits in the same transaction as the
+change it records & D-03, D-01 \\ \hline
+ADR-09 & No service reads or writes another service' s
+tables & --- \\ \hline
+ADR-10 & Spring Boot, PostgreSQL, RabbitMQ, Docker & D-01 \\ \hline
+ADR-11 & A gate read completes at the farm edge; central services
+consolidate & D-02, D-01 \\ \hline
+ADR-12 & During WAN loss, gate capture and valid leased local reads
+continue; clinical, transfer and configuration writes and new human
+logins remain online-only & D-03, D-01 \\ \hline
+\end{longtable}
+}
+
+\subsection{ADR-01: Service-based backbone with event-driven gate processing}\label{adr:01}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} The driving characteristics are D-01
+Reliability/Durability, D-02 Performance and D-03 Security/Auditability
+(\Cref{sec:3.3}). The average gate rate is low, about 0.11 passages per
+second per farm (\Cref{sec:2.2.1}), but reads arrive in bursts and each
+read carries its own two-second deadline. The system serves three farms
+and is built by a small team, so operational cost is a constraint.
+
+\textbf{Decision:} The central system is four coarse-grained services
+--- Movement \& Alert, Herd \& Health, Reporting \& Integration,
+Identity \& Admin (\Cref{sec:4.5}) --- behind an API gateway. After the farm edge commits a gate outcome (ADR-11),
+the committed facts travel as events through a message broker to the
+central services. Nothing on the gate path
+waits on a synchronous call to a central service.
+
+\textbf{Consequences: Separate process/deployment boundaries can isolate
+movement from reporting and external workers. The shared central DB is
+still a common fault domain. This is fewer service units than the
+fine-grained V6 variant; operational cost is an assessment to verify,
+not a measured fraction.}
+
+\textbf{Compliance:} QAS01 (two-second gate outcome under the peak
+workload) and QAS03 (crash and replay). Architecture review: no
+synchronous dependency from the gate path to a central service.
+
+\subsection{ADR-02: Edge gateway per farm}\label{adr:02}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} Farms are rural and the WAN link may be slow or
+interrupted (\Cref{sec:1.5}), yet no movement may be lost and every read
+has a two-second deadline.
+
+\textbf{Decision:} Each farm runs an edge server (local SSD, UPS, local
+PostgreSQL) that receives reader events over LLRP on the farm LAN and
+forwards events to the central broker over AMQP with mTLS. What the edge
+completes locally is fixed by ADR-11; what it may do offline is fixed by
+ADR-12.
+
+\textbf{Consequences:} Farms keep recording through WAN outages, and WAN
+latency is off the gate path. Edge software must be deployed, monitored
+and updated at three sites, and each edge needs its own machine
+identity.
+
+\textbf{Compliance:} QAS02 (60-minute WAN outage with no lost or
+duplicated movements).
+
+\subsection{ADR-03: Persist before acknowledge, at-least-once delivery}\label{adr:03}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} No movement or health record may be lost in normal
+operation (NFR-02).
+
+\textbf{Decision: Each owner atomically commits its effect, stable
+operation receipt and required source evidence/outbox before success or
+message ACK. Edge relay status becomes SENT\_TO\_BROKER only after
+publisher confirm; local canonical facts/evidence remain retained.
+Central consumers ACK after their owned transaction; durable projection
+outboxes are drained by restartable idempotent workers. Broker receipt,
+consumer fact commit, projection completion and canonical audit
+collection are distinct stages.}
+
+\textbf{Consequences:} No loss within the declared fault envelope, but
+duplicates are possible; ADR-04 makes them harmless. A broker confirm
+alone does not prove that the business effect was applied.
+
+\textbf{Compliance:} QAS03 (crash after commit, before acknowledgement);
+SC-02.
+
+\subsection{ADR-04: Idempotent consumers and write paths}\label{adr:04}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} At-least-once delivery, client retries and RFID
+multi-reads all produce duplicates.
+
+\textbf{Decision: Every normalized movement and health intent has a
+stable ID; each effect owner commits its processed
+marker/effect/evidence atomically. Same ID/different content is
+rejected. Physical passage classification uses qualified observation
+identity, gate/antenna context and direction state; repeated
+observations of one passage are collapsed, while a genuine OUT/IN
+sequence within the observation window creates two movements. Transport
+retries preserve the original event ID.}
+
+\textbf{Consequences:} Correct counts and a single treatment record
+despite retries; each consumer needs a processed-ID store.
+
+\textbf{Compliance: QAS03 (exactly 100 effects from replayed IDs); QAS05
+(one health intent); additional passage fixture: OUT then IN within the
+observation window yields two logical movements and the correct count.}
+
+\subsection[ADR-05: Append-only movement events and versioned health records]{ADR-05: Append-only movement events and versioned\\ health records}\label{adr:05}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} Movement and health history must be complete and
+trustworthy, and head counts must be explainable.
+
+\textbf{Decision: Committed movement, health and audit facts are not
+updated or deleted. Movement correction appends a compensating event;
+health correction appends a linked version. Canonical permanent RFID is
+never reassigned, and tag incidents preserve the cattle history; a
+different RFID requires a separately approved extension. Counts are
+rebuildable projections with declared initial state and watermarks.
+Application accounts cannot UPDATE/DELETE canonical fact/evidence
+tables; mutable operational projections and dispatch status are
+separate.}
+
+\textbf{Consequences:} Full history and rebuildable counts. Storage
+grows over time, and queries must select the current version.
+
+\textbf{Compliance:} SC-02 and SC-05; database-permission check in M2.
+
+\subsection{ADR-06: Single integration point with safe external delivery}\label{adr:06}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} The National Animal Disease Control System is outside
+VinaBeef' s control. Its failures must not affect core
+functions, and a timeout can follow a side effect at the receiver.
+Whether its API supports idempotency keys or status lookup is not yet
+known.
+
+\textbf{Decision: Only Integration Gateway calls external systems.
+Persist the approved immutable intent/payload version before dispatch.
+Final contractual business acceptance evidence is required for
+COMPLETED; 202 or a found-but-processing status is PENDING. An ambiguous
+outcome remains UNKNOWN. Retry only when an honoured idempotency
+contract or conclusive status semantics establishes safety; lookup
+absence/404 is not automatically proof of no receiver effect. Back off,
+respect applicable Retry-After, bound attempts, and retain unresolved
+exhausted work for FM-approved reconciliation. Confirmed rejection is
+FAILED; retry exhaustion alone does not prove rejection.}
+
+\textbf{Consequences:} External changes are contained in one component,
+and no submission is lost or blindly duplicated. Some submissions may
+wait for manual reconciliation. The real API contract must be qualified
+during M2.
+
+\textbf{Compliance:} QAS06; SC-06.
+
+\subsection{ADR-07: API gateway with service-level authorization}\label{adr:07}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} RBAC must apply to every request, and permissions
+depend on barn and farm scope (\Cref{sec:2.2.3}), which only the service
+that owns a resource can evaluate.
+
+\textbf{Decision: Central client traffic enters through the API gateway,
+which authenticates users (JWT). Every resource owner checks action and
+canonical barn/farm scope at service, query and export boundaries;
+unspecified actions are denied. The farm-LAN read-only dashboard is the
+declared exception: Edge Core validates its existing session, cached
+scoped grant and unexpired policy lease on every local request (\Cref{sec:2.2.2}; ADR-12). It cannot authorize online-only actions or a new human
+login. Readers and workers use separate provisioned machine identities
+and cannot act as human approvers.}
+
+\textbf{Consequences:} Consistent, layered security. Authorization logic
+runs in every service, so it is packaged as a shared library and policy
+versions are audited. The gateway must be highly available.
+
+\textbf{Compliance:} QAS04 (wrong-farm access, SA clinical write and
+revoked export are all denied); SC-04.
+
+\subsection{ADR-08: Audit evidence in the same transaction}\label{adr:08}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} Comprehensive audit logging is mandatory (NFR-05), and
+evidence written after the fact can be lost.
+
+\textbf{Decision:} Each covered operation writes its audit evidence to
+an outbox in the same database transaction as the change, and a relay
+publishes it to the insert-only audit store. Coverage includes state
+changes, sensitive reads (clinical profiles, exports, audit evidence)
+and authorization denials (\Cref{sec:2.2.4}). If mandatory evidence cannot
+be written, the operation does not report success. A denial stays denied
+even if its log write fails, and the gap is recorded. Relay duplicates
+keep their audit ID and are de-duplicated.
+
+\textbf{Consequences:} No audited business success without its evidence,
+at a small write cost. The edge store also needs an outbox for gate
+evidence.
+
+\textbf{Compliance:} QAS05 (a health write whose evidence step fails is
+rolled back); SC-05.
+
+\subsection{ADR-09: No shared tables between services}\label{adr:09}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} Services must be able to change their data models
+independently.
+
+\textbf{Decision:} Each service owns one PostgreSQL schema. Services
+exchange data only through APIs or events, even on a shared database
+server; data another service needs is copied into a read model.
+
+\textbf{Consequences:} Looser coupling and independent schema change.
+Some data is duplicated, and read models are eventually consistent.
+
+\textbf{Compliance:} Each service' s database account
+holds grants on its own schema only; checked in M2.
+
+\subsection{ADR-10: Technology stack}\label{adr:10}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context: The team works with Java and Spring Boot, and M2
+requires implementation and testing. The average passage rate is low,
+but it does not bound raw-read bursts. The per-read deadline and
+preservation of movement/health records remain mandatory.}
+
+\textbf{Decision: Use Spring Boot, owned PostgreSQL schemas/local
+stores, RabbitMQ quorum queues with confirms/manual ACK, and Docker. Broker choice follows delivery/recovery needs and
+team familiarity, not the passage average alone. Kafka remains an
+alternative for different stream-retention needs. M2 qualifies bursts,
+raw reads, resource configuration and operational complexity (\Cref{sec:4.5}).}
+
+\textbf{Consequences:} Mature, documented tools and one stack at edge
+and centre. Replaying long histories relies on the append-only tables
+(ADR-05) rather than on broker retention.
+
+\textbf{Compliance:} M2 build and deployment configuration.
+
+\subsection{ADR-11: Gate processing completes at the farm edge}\label{adr:11}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} Each read must complete within two seconds (NFR-01)
+and survive WAN outages (NFR-02, NFR-03). If completion depends on
+central services, the deadline includes WAN latency and fails whenever
+the link is down.
+
+\textbf{Decision: Edge Core runs qualified reader/passage/direction
+logic, local movement/count and provisional alerts against versioned
+cached context. A required read completes at a durable correct local
+disposition: accepted movement/count/evidence, or duplicate/invalid
+disposition with its required evidence. The central Movement \& Alert
+application consolidates facts and recoverable projections. Compare
+equal source/event watermarks before detecting divergence. Rebuild from
+complete retained local facts plus approved initial snapshot, or a
+verified snapshot merged with unsynced local facts; never discard
+pending history or treat ordinary sync lag as corruption.}
+
+\textbf{Consequences: The gate completion path has no central
+dependency. Edge and central share a versioned rule module; cache
+versions and source sequence/event time make replay and
+provisional-alert reconciliation explainable. Cached context can be
+stale, so domain conclusions remain provisional until reconciliation;
+actual timing is verified in M2.}
+
+\textbf{Compliance:} QAS01 (timing measured to the edge commit); QAS02;
+SC-01, SC-03.
+
+\subsection{ADR-12: Offline operation scope}\label{adr:12}
+
+\textbf{Status: Accepted.}
+
+\textbf{Context:} During a WAN outage the edge cannot validate central
+policy, and clinical and transfer operations need current custody and
+approvals (\Cref{sec:2.2.2}).
+
+\textbf{Decision:} Offline, the edge runs gate capture, local movement
+and head count, alert evaluation with cached context, and durable
+pending synchronization. Clinical writes, transfers, configuration
+changes and new human logins are online-only. Existing local dashboard
+sessions expire 15 minutes after the last central policy
+validation.
+
+\textbf{Consequences: Gate capture continues with its separate machine
+identity, while human writes and new logins remain denied offline. A
+centrally revoked grant cannot be observed immediately during WAN loss;
+the local read-only lease bounds stale permission to 15 minutes, or earlier session expiry. The group accepts this trade-off:
+continuous gate capture is worth a bounded window of stale read-only
+access. Health events occurring during an outage are entered after
+recovery.}
+
+\textbf{Compliance:} QAS02 (local processing continues); QAS04
+(online-only actions are denied).

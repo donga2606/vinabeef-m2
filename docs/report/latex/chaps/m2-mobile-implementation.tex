@@ -1,0 +1,206 @@
+\section{M2 Mobile Capture Implementation}\label{sec:m2-mobile}
+
+\noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+\textbf{Source code.}\\
+Backend (Health service, in-scope API, JWT resource server):
+\url{https://github.com/donga2606/vinabeef-m2}, commit
+\texttt{99b87af} on \texttt{main}, 22 November 2026.\cite{m2BackendMobile}\\
+Mobile client (Flutter):
+\url{https://github.com/jaysonphan/vinabeef-mobile}, commit
+\texttt{5d60fc7} on \texttt{main}, 22 November 2026.\cite{m2MobileRepo}\\
+The Health backend verified in \Cref{sec:m2-health} is the earlier
+\texttt{staging} commit \texttt{fee7a8d}.\cite{m2HealthStaging}}}
+
+\medskip
+This section covers the second M2 issue: a barn supervisor (BS) or farm
+manager (FM) records a vaccination or health observation at the barn
+with a phone and an RFID reader, while the barn may have no network.
+Phan Ho Duy Thong implemented the mobile client and the server
+additions it needs. It follows Option B of QAS09 (\Cref{sec:qas09}):
+the phone keeps durable local drafts while offline, and only the Health
+service accepts a record.
+
+\subsection{End-to-end flow}\label{sec:m2-mobile-flow}
+
+The numbered steps below match the screens of the app.
+
+\begin{enumerate}
+\item \textbf{Prepare session (online).} The user signs in with
+Keycloak (Authorization Code with PKCE). The app calls
+\texttt{GET /api/v1/cattle/in-scope} and caches the animals the user
+may treat, with their \texttt{resourceVersion} and open vaccination
+schedules. The cache is valid for 12 hours. Without a valid session
+the app does not allow offline capture.
+\item \textbf{Scan.} The reader produces a \texttt{TagObservation}
+(source \texttt{MOBILE}, no direction). If several tags are read, the
+user must pick one. An unknown or out-of-scope tag stays unresolved;
+no animal is created.
+\item \textbf{Confirm animal.} The app shows the matched animal (RFID,
+farm, barn, open doses). The user must confirm it explicitly before a
+form opens.
+\item \textbf{Record at the barn.} The user fills in a vaccination
+(vaccine, batch, dose, optional schedule) or a health observation. The
+form is stored as a \texttt{DRAFT} in local SQLite and can still be
+edited or discarded.
+\item \textbf{Confirm the record.} Confirmation creates the
+\texttt{intentId}, freezes the canonical request body (including
+\texttt{expectedVersion}) and moves the intent to
+\texttt{PENDING\_SYNC}. From here the content cannot change. The
+screen says \emph{Saved on this device}, never \emph{Accepted}.
+\item \textbf{Sync.} The sync coordinator runs on start, every 20 s,
+after a confirmation and on demand. It posts the frozen body with the
+same \texttt{intentId}. If an earlier response was lost, it first reads
+\texttt{GET /health-intents/\{id\}} (the receipt) and only resubmits on
+404. HTTP 401 keeps all intents pending and asks the user to sign in.
+\item \textbf{Result.} The server outcome is stored and shown:
+\texttt{ACCEPTED} (201 or 200 replay), \texttt{NEEDS\_REVIEW} (version
+changed), or \texttt{REJECTED} (for example
+\texttt{SCHEDULE\_ALREADY\_COMPLETED} or \texttt{ACCESS\_DENIED}). The
+animal history screen reads the server history.
+\end{enumerate}
+
+The key distinction is between a \emph{local draft saved on the
+device} and a \emph{record accepted by the server}. Only the Health
+service accepts a clinical record, after it checks current
+authorization, custody and version in one transaction (ADR-08).
+
+\subsection{Module structure}\label{sec:m2-mobile-modules}
+
+The mobile client follows
+the same ports-and-adapters split as \texttt{herd-health}.
+
+{\small
+\begin{longtable}{|p{0.27\linewidth}|p{0.64\linewidth}|}
+\hline
+\textbf{Package} & \textbf{Responsibility} \\ \hline
+\endhead
+\texttt{capture/domain} & \texttt{Cattle}, \texttt{LocalIntent},
+\texttt{IntentStatus}, \texttt{SubmitResult}, \texttt{TagObservation},
+\texttt{WorkSession}. No Flutter or I/O imports. \\ \hline
+\texttt{capture/application} & Ports (\texttt{DraftStore},
+\texttt{HealthApi}, \texttt{TagReadSource}, \texttt{WorkSessionStore},
+\texttt{AuthSession}); \texttt{CaptureService} (validate, confirm,
+freeze body); \texttt{SyncCoordinator} (receipt-first retry);
+\texttt{WorkSessionService}. \\ \hline
+\texttt{capture/data} & SQLite draft and session stores,
+\texttt{HttpHealthApi} (dio), \texttt{FakeTagReadSource}, and an
+in-app simulator that mirrors the Health contract for demos. \\ \hline
+\texttt{capture/presentation} & Home, scan, confirm, form, intent
+detail and history screens; status chips. \\ \hline
+\texttt{auth} & \texttt{KeycloakAuthSession} (live) and
+\texttt{DemoAuthSession}; refresh token in secure storage. \\ \hline
+\texttt{composition\_root} & The only place that chooses demo or live
+adapters. \\ \hline
+\end{longtable}
+}
+
+\subsection{Server additions}\label{sec:m2-mobile-server}
+
+The mobile flow needed two changes in \texttt{herd-health}, both in the
+existing hexagonal structure:
+
+\begin{itemize}
+\item \texttt{GET /api/v1/cattle/in-scope}:
+\texttt{CattleScopeController} $\rightarrow$
+\texttt{ListCattleInScopeUseCase} $\rightarrow$
+\texttt{CattleScopeService} $\rightarrow$ \texttt{CattleScopeQueryPort}
+(\texttt{JdbcCattleScopeQuery}). The service pre-filters by the farms
+in the caller's grants and checks \texttt{VIEW\_CATTLE} for each row,
+so the list obeys the same policy as a single lookup. It returns
+active animals with \texttt{resourceVersion} and open schedules. The
+OpenAPI contract was updated.
+\item JWT resource server: \texttt{HealthSecurityConfiguration}
+validates Keycloak tokens (JWKS signature and issuer), maps the
+principal from \texttt{preferred\_username}, permits only
+\texttt{/actuator/health} without a token, and returns a
+\texttt{problem+json} 401 for missing or invalid tokens. Current grants
+still come from the grant adapter, which is a JSON fixture in this
+prototype.
+\end{itemize}
+
+\subsection{Verification}\label{sec:m2-mobile-verification}
+
+{\small
+\begin{longtable}{|p{0.30\linewidth}|p{0.15\linewidth}|p{0.46\linewidth}|}
+\hline
+\textbf{Item} & \textbf{Status} & \textbf{Evidence} \\ \hline
+\endhead
+Backend build, all modules & Passed & \texttt{./dev mvn -B verify}, 22
+Nov 2026: BUILD SUCCESS (access-policy 76, farm-edge 10, movement 3,
+reader-emulator 14). Herd-health ran 20 tests; its 13 Testcontainers
+tests are skipped in the toolbox (no Docker socket) and are covered by
+\Cref{tab:m2-health-tests}. \\ \hline
+\texttt{CattleScopeService} unit tests & Passed & 5 tests in the run
+above. \\ \hline
+Local stack (Compose, profile \texttt{local}) & Passed & All containers
+healthy; \texttt{/actuator/health} returns UP. \\ \hline
+Token required & Passed & \texttt{in-scope} without a token returns 401
+\texttt{problem+json}. \\ \hline
+Scope with real Keycloak token & Passed & Token for \texttt{bs.demo}
+(BS, BARN-DL-01) returns exactly one animal, RFID-DL-1001, with the
+open FMD-BOOSTER schedule; animals in BARN-DL-02 and FARM-GL are not
+returned. \\ \hline
+App on iOS simulator & Run & Demo mode screens exercised manually. \\ \hline
+Mobile automated tests (24) & Not recorded & \texttt{flutter test};
+the list is below. Results are not recorded in this report. \\ \hline
+QAS09 fixture (20 drafts, 120 s) & Not run & Planned measure; see
+\Cref{sec:qas09}. \\ \hline
+\end{longtable}
+}
+
+The mobile tests cover the behaviour the review asked for:
+
+\begin{itemize}
+\item \textbf{Capture} (5): confirmation freezes the body with a stable
+\texttt{intentId}; a submitted intent cannot be edited, re-confirmed
+or deleted; invalid input and a future \texttt{occurredAt} are rejected
+before an intent exists.
+\item \textbf{Sync} (7): offline intents stay \texttt{PENDING\_SYNC}
+and are later accepted once with the same id and body; a lost response
+is resolved by the receipt; receipt 404 leads to a resubmit of the same
+body; 401 keeps everything pending; final outcomes are not resent.
+\item \textbf{Simulated Health semantics} (11): retry $\times$3 gives one
+record; changed body gives \texttt{IDEMPOTENCY\_KEY\_REUSED}; completed
+schedule gives \texttt{REJECTED}; a second offline intent for the same
+animal gives \texttt{NEEDS\_REVIEW}; wrong barn and moved custody are
+denied; unknown fields are rejected.
+\item \textbf{Widget} (1): the status chip distinguishes pending from
+accepted.
+\end{itemize}
+
+Demo scenarios mapped to the M2 cases: T05 (offline capture, then
+sync), T06 (retry and version), T07 (wrong barn, revoked grant) and
+T09 (unknown tag, explicit confirmation). In demo mode they run against
+the in-app simulator; in live mode against the local Compose stack.
+
+\subsection{How to run}\label{sec:m2-mobile-run}
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily,breaklines=true,columns=fullflexible]
+# backend (repository vinabeef-m2)
+cp -n .env.example .env
+./dev up -Profile local          # Postgres, Keycloak, herd-health ...
+# mobile (repository vinabeef-mobile)
+./scripts/bootstrap.sh ios       # or android
+flutter test
+flutter run                      # choose Demo or Live on the login screen
+\end{lstlisting}
+
+Live mode uses \url{http://localhost:8080} (Health) and
+\url{http://localhost:8081/realms/vinabeef} (Keycloak). Demo users:
+\texttt{bs.demo} and \texttt{fm.demo}.
+
+\subsection{Limitations and open points}\label{sec:m2-mobile-limits}
+
+\begin{itemize}
+\item The RFID reader is simulated (\texttt{FakeTagReadSource}); the
+Bluetooth reader adapter is not built.
+\item Grants come from a JSON fixture, not a real IAM grant service.
+\item Custody moved out of scope before sync returns 403 and the app
+shows \texttt{REJECTED}. Treating it as \texttt{NEEDS\_REVIEW} is still
+an open team decision.
+\item Because \texttt{resourceVersion} is an optimistic lock, a second
+offline record for the same animal before sync goes to
+\texttt{NEEDS\_REVIEW}. This is the intended safe outcome, but it
+creates review work for the FM.
+\item The snapshot checker has not yet been run on a mobile export.
+\end{itemize}

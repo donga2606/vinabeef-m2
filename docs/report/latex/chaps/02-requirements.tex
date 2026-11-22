@@ -1,0 +1,345 @@
+\section{Requirements}\label{sec:2}
+
+\subsection{Functional Requirements, Acceptance Criteria and Use Cases}\label{sec:2.1}
+
+\subsubsection{Functional Requirements}\label{sec:2.1.1}
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.0967\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.1827\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.6906\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{ID} & \textbf{Group} & \textbf{Requirement} \\ \hline
+\endhead
+\textbf{FR-01} & Cattle \& Tag & Register an animal with its RFID tag
+and maintain its farm/barn assignment and animal profile \\ \hline
+\textbf{FR-02} & Cattle \& Tag & Record lost/damaged physical-tag
+incidents while preserving the permanent RFID identity and complete
+history. A replacement tag carries the same permanent identity;
+assigning a different RFID is outside the scope of this phase. \\ \hline
+\textbf{FR-03} & Cattle \& Tag & Deactivate a tag when an animal dies or
+leaves the company \\ \hline
+\textbf{FR-04} & Cattle \& Tag & Search animals by tag, ID, farm or
+barn \\ \hline
+\textbf{FR-05} & Gate \& Reader & Manage farms, barns and gates \\ \hline
+\textbf{FR-06} & Gate \& Reader & Register readers and map each to a
+gate and direction \\ \hline
+\textbf{FR-07} & Gate \& Reader & Monitor reader status through
+heartbeats and alert when a reader is offline \\ \hline
+\textbf{FR-08} & Movement & Capture read events automatically (tag,
+reader, timestamp) \\ \hline
+\textbf{FR-09} & Movement & Collapse repeated observations of the same
+physical passage using reader/gate context and passage/direction state.
+Retain distinct passages even within the time window; deduplicate
+transport retries by stable event ID. \\ \hline
+\textbf{FR-10} & Movement & Determine the direction of each passage
+(IN/OUT) \\ \hline
+\textbf{FR-11} & Movement & Maintain a near real-time head count per
+barn \\ \hline
+\textbf{FR-12} & Movement & Record observed movement and approved
+barn/farm transfers separately. Change assigned custody only through a
+versioned transfer workflow; cross-farm transfer requires source and
+destination approvals. \\ \hline
+\textbf{FR-13} & Alerting & Raise a missing-animal alert when animals
+that left have not returned by the end of the return window \\ \hline
+\textbf{FR-14} & Alerting & Raise an unexpected-animal alert for
+unregistered or deactivated tags \\ \hline
+\textbf{FR-15} & Alerting & Raise a wrong-barn alert when an animal
+enters a barn it is not assigned to \\ \hline
+\textbf{FR-16} & Health & Record vaccinations (such as: vaccine, batch,
+date, veterinarian) and vaccination schedules \\ \hline
+\textbf{FR-17} & Health & Record health status, diagnoses and
+treatments \\ \hline
+\textbf{FR-18} & Health & View an animal' s complete
+profile and history timeline \\ \hline
+\textbf{FR-19} & Reporting & Generate head count, movement, vaccination
+coverage, health and alert reports \\ \hline
+\textbf{FR-20} & Reporting & Export authorized reports in CSV,
+PDF and XLSX formats, preserving the same selected records and scope
+filters. \\ \hline
+\textbf{FR-21} & Reporting & Send relevant outbreak and
+health-surveillance data to the National Animal Disease Control System
+via API. \\ \hline
+\textbf{FR-22} & Reporting & Provide an executive monitoring dashboard
+across farms \\ \hline
+\textbf{FR-23} & Auditing & Maintain an audit log of relevant system
+activities \\ \hline
+\textbf{FR-24} & Administration & Manage users, roles and permissions \\ \hline
+\textbf{FR-25} & Administration & Configure approved return windows,
+reader-offline timing, alert notification settings and
+passage-observation windows; configuration must not discard genuine
+passages or hide missing cattle. \\ \hline
+\end{longtable}
+}
+
+\subsubsection{Acceptance Criteria and Use Cases}\label{sec:2.1.2}
+
+Acceptance criteria define observable functional outcomes. The following
+representative fixtures verify the functional groups; timing, faults,
+permissions and evidence completeness are additionally verified by the
+QAS and SC tables. All implementation tests are planned for M2.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.1633\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.8067\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Category} & \textbf{Acceptance Criteria} \\ \hline
+\endhead
+\textbf{Cattle \& Tag} & Register a previously unused permanent RFID
+once; reject an active collision. Search returns the same cattle/history
+after an identity-preserving physical-tag incident or deactivation. No
+permanent RFID is reassigned to another animal. \\ \hline
+\textbf{Gate \& Reader} & Provision an approved farm/barn/gate/reader
+binding; reject inconsistent bindings. A heartbeat timeout records a
+reader-offline alert under the declared timing policy; an available
+reader resumes capture. \\ \hline
+\textbf{Movement} & From declared initial occupancy, one valid OUT
+followed by IN restores the count. Replayed event IDs have one effect.
+OUT then IN within the observation window retains both passages.
+Approved transfers retain source/destination history; an unexpected gate
+read cannot silently change custody. \\ \hline
+\textbf{Alerting} & An outstanding OUT at return-window close creates a
+scoped missing alert; OUT/IN/OUT is outstanding again. An unregistered
+tag or wrong-barn entry creates its respective alert. Approved custody
+transfers are excluded from expected-return obligations; stale context
+yields provisional alerts. \\ \hline
+\textbf{Health} & One authorized vaccination/treatment intent and three
+retries create one record. A schedule retains its due date/status and
+links a completed dose without duplicate vaccination effects.
+Corrections append linked versions; complete permitted history remains
+retrievable. \\ \hline
+\textbf{Reporting} & Export the same authorized dataset to CSV/PDF/XLSX
+with identical record/scope selection. Executive views exclude clinical
+narratives. Final external acceptance marks completion; 202 remains
+pending; ambiguous outcomes preserve the approved intent. \\ \hline
+\textbf{Auditing} & Every covered committed operation has valid source
+evidence and eventually canonical evidence after collector recovery.
+User and machine actors are identifiable; denied access never causes
+unauthorized effects. \\ \hline
+\textbf{Admin\-is\-tration} & Unapproved role/configuration changes and
+self-escalation are denied. FM/EM approvals and SA application are
+linked to scope and policy version; revoked access fails at report
+execution/download. \\ \hline
+\end{longtable}
+}
+
+\emph{\Cref{app:A} describes five core use cases, including approved
+transfer and external-submission subflows. \Cref{fig:1} shows external
+human, reader and National-system participation; timers and Edge Core
+are internal behavior. Participation never grants unrestricted
+permission.}
+
+\subsection{Non-Functional Requirements}\label{sec:2.2}
+
+VinaBeef must process gate reads within two seconds, preserve movement
+and health records during normal operation, and enforce RBAC with
+comprehensive audit logging. These constraints guide the
+architecture alongside the current scale of three farms, 120 barns and
+approximately 25,000 cattle. API exchange is an explicit function;
+continuity, changeability and exchange quality require additional design
+criteria.
+
+E identifies an explicit assignment requirement, I a justified inference
+and P a project-defined criterion. Timing boundaries, permissions and test
+budgets marked P are set by this design because the assignment does not
+specify them; they are verified in M2 and kept separate from the
+assignment' s mandatory outcomes.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.2426\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2425\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{ID} & \textbf{Characteristic} & \textbf{Required outcome and scope} & \textbf{Origin} \\ \hline
+\endhead
+NFR-01 & Performance & Each required gate read completes correctly
+within \(\leq\)2 seconds under the declared peak workload & E
+deadline; P completion boundary \\ \hline
+NFR-02 & Reliability and durability & Zero lost movement or health
+records during normal operation; correct effects and preserved history &
+E no-loss; I/P recovery extension \\ \hline
+NFR-03 & Availability and continuity & Local gate processing continues
+during a 60-minute WAN outage; its backlog recovers within 10
+minutes while live traffic continues & I continuity; P budgets \\ \hline
+NFR-04 & Security & Enforce the four human roles with action and
+barn/farm scope; deny unauthorized access and changes & E RBAC; P
+detailed policy \\ \hline
+NFR-05 & Auditability & Every covered committed operation has valid
+durable evidence; sensitive access is also traceable & E comprehensive
+audit; P coverage measure \\ \hline
+NFR-06 & Interoperability & Exchange approved data through APIs with
+durable submission state, validated formats and safe handling of
+uncertain outcomes & E API function; I/P quality \\ \hline
+NFR-07 & Scalability and configurability & Support the current dataset
+and declared gate workload; compatible farm/barn/reader additions use
+configuration and provisioning & E scale; I/P expansion \\ \hline
+NFR-08 & Maintainability and testability & Compatible reader/API adapter
+changes preserve core business rules and pass relevant contract/domain
+tests & E SOLID/M2; I/P change criteria \\ \hline
+\end{longtable}
+}
+
+\subsubsection{Performance and Record Preservation}\label{sec:2.2.1}
+
+The assignment' s approximately 200 cattle per farm in 30
+minutes gives 200/1800 = 0.111 passages/s. This average does not
+establish instantaneous raw-read load: one passage can produce repeated
+observations, and cattle can arrive in bursts. M2 workload declarations
+must include read multiplicity, burst timing, concurrent farms and
+available resources.
+
+The measurement starts at read creation at the source and ends
+at the correct durable local outcome: movement, count effect and
+required evidence, or a valid duplicate/invalid-input disposition. A
+queued message alone does not complete processing. Every required read
+must meet the two-second limit; percentiles are diagnostic. Missing,
+incorrect and timed-out outcomes remain in the result, with clock
+uncertainty accounted for.
+
+Each persistent owner commits its business effect, operation identity
+and required evidence atomically, then reports success or acknowledges
+delivery. Stable identities and idempotency prevent replay from
+duplicating movements, vaccinations or treatments. Health retries after
+an uncertain response resolve the original intent, and corrections
+retain linked versions. Separately stored projections need their own
+transaction and recovery boundaries; broker confirmation does not prove
+application completion.
+
+The no-loss requirement covers both movement and health. Process
+restart/replay and WAN outage are design extensions covered while durable
+storage remains intact and correctly configured. Lossless capture during
+full-disk, power or storage destruction requires additional protection;
+unrestricted disaster zero-loss is not assumed.
+
+\subsubsection{Availability and External Exchange}\label{sec:2.2.2}
+
+The offline subset includes gate capture, local movement/count,
+alert evaluation with sufficient cached context, and durable pending
+synchronization. Stale or unknown context is marked provisional.
+Clinical operations, transfers, configuration changes and new human
+login remain online-only. Existing local dashboard reads expire within 15 minutes of the last central policy validation, or earlier
+session expiry; machine capture uses a separate provisioned identity and
+policy.
+
+At one logical movement per passage, a 60-minute test at 1/9 movement/s
+creates 400 movements per farm, or 1,200 across three farms. Draining
+this backlog in 600 seconds while accepting live traffic requires at
+least 400/600 + 1/9 = 7/9 movement/s per farm at a movement-processing
+stage. This is a necessary lower bound, not proof of end-to-end
+capacity. The outage/recovery budgets are finite test budgets, not
+production SLAs.
+
+External submissions are persisted before dispatch. The integration
+adapter distinguishes pending, unknown and completed outcomes. HTTP 202
+is pending acceptance; a timeout can follow a receiver side effect.
+Ambiguous operations are retried automatically only when the receiver
+contract establishes safety; otherwise they require status lookup or
+reconciliation. Backoff respects applicable Retry-After, and bounded
+retries retain unresolved intents. The actual National API
+contract must be qualified during implementation.
+
+\subsubsection{Security and the RBAC Matrix}\label{sec:2.2.3}
+
+Security is the characteristic; RBAC is an authorization mechanism.
+Chapter 4 lists Authorization among cross-cutting concerns and defines
+Security in terms of appropriate authorized access.
+The matrix implements the assignment' s four
+roles. Unspecified actions are denied, and permission is checked against
+the canonical resource at the service, query and export boundaries.
+
+BS = Barn Supervisor; FM = Farm Manager; SA = System Administrator; EM =
+Executive Management. B/F means assigned barn/farm scope; H-B/H-F
+permits complete history of cattle currently in that scope; O-F permits
+own-origin records after a transfer; C is company technical scope; A is
+an approved aggregate view; D means denied. Each permission also
+requires the applicable approval, version and workflow checks.
+
+{\footnotesize
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.1940\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.1940\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.1940\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.1940\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.1940\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Action group} & \textbf{BS} & \textbf{FM} & \textbf{SA} & \textbf{EM} \\ \hline
+\endhead
+Read gate count and alert dashboard & B & F & D & A \\ \hline
+Read cattle identity and movement history & H-B & H-F or O-F & D & A \\ \hline
+Read full vaccination and health profile & H-B & H-F or O-F & D & D \\ \hline
+Register cattle and permanent RFID & D & F & D & D \\ \hline
+Record vaccinations, treatments or schedules & H-B & H-F & D & D \\ \hline
+Request health correction & H-B & H-F or O-F & D & D \\ \hline
+Approve and apply health correction & D & O-F & D & D \\ \hline
+Append metadata or movement correction & D & F or O-F & D & D \\ \hline
+Request transfer & B & F & D & D \\ \hline
+Approve barn or farm transfer & D & F & D & D \\ \hline
+Acknowledge or request alert resolution & B & F & D & D \\ \hline
+Resolve alert or approve domain configuration & D & F & D & D \\ \hline
+Apply approved technical configuration & D & D & C & D \\ \hline
+Generate and download business reports & B & F & D & A \\ \hline
+Approve external submission or reconciliation & D & F & D & D \\ \hline
+Read protected business audit evidence & B & O-F & D & A \\ \hline
+Manage accounts and role grants & D & Approve F grants & Apply approved
+C actions & Approve company SA/EM grants \\ \hline
+Hard delete committed movement, health or audit & D & D & D & D \\ \hline
+\end{longtable}
+}
+
+Cross-farm transfers require both source- and destination-scope
+approvals. New health writes require current custody, a stable intent
+and the expected version. Health correction approval belongs to the
+original record' s farm; ordinary corrections cannot
+change custody. FM approves business configuration before SA applies it.
+Role grants require independent FM/EM approval and prohibit
+self-escalation. SA has scoped technical/security audit access, without
+ordinary clinical read/write privilege. Report execution and download
+recheck current scope; aggregate permissions exclude clinical
+narratives.
+
+Provisioned readers and processing/synchronization/integration workers
+have separate machine identities limited to their assigned duties; they
+cannot impersonate human approvals. Compatible farm onboarding uses
+preapproved deployment provisioning. Runtime farm-creation actions
+require a separately defined approval policy and remain denied while
+unmapped.
+
+\subsubsection{Audit Coverage}\label{sec:2.2.4}
+
+Auditability expresses the project' s traceability goal.
+It is supported by Chapter 4' s Accountability and
+Nonrepudiation concerns; logging contributes evidence
+but does not alone establish strong nonrepudiation. The following
+coverage groups operationalize comprehensive audit logging.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.3234\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.3233\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.3233\linewidth-2\tabcolsep\relax}|}
+\hline
+\textbf{Covered event group} & \textbf{Evidence to retain} & \textbf{Responsible source} \\ \hline
+\endhead
+Cattle registration and device/configuration changes & Identity/scope,
+validated versions, actor and approvals & Registry and
+device/configuration owner \\ \hline
+Movement, count, alert and transfer lifecycle & Read/operation
+references, direction, effects, transition reasons and approvals &
+Movement, Count and Alert owners \\ \hline
+Vaccination, health, treatment and correction & Stable intent, protected
+record/version links, reason and actor; clinical-access evidence &
+Health owner \\ \hline
+Authentication, authorization, accounts and grants & Decision,
+role/resource scope, policy version, approver and applier & IAM and
+resource owner \\ \hline
+Reports, exports and audit access & Authorized scope, job/artifact,
+execution/download/access result & Reporting and Audit owners \\ \hline
+External submission and reconciliation & Intent, destination/schema,
+attempt, status and acceptance evidence & Integration owner \\ \hline
+Synchronization, evidence controls and restore & Source/receipt
+identity, recovery/configuration reference and operator/result & Sync,
+Audit and storage owners \\ \hline
+\end{longtable}
+}
+
+Common fields identify who or which device/service acted, what action
+affected which resource, when it occurred, its outcome and its
+operation/correlation identity. Clinical text, secrets and credentials
+are excluded from broad technical logs; protected references preserve
+provenance.
+
+Required business evidence/outbox commits with the mutation at its
+source. Remote collection can recover later; failure to persist
+mandatory source evidence prevents an audited business success. Relay
+duplicates retain stable audit identities and are deduplicated.
+Denied access remains denied if logging fails, and any missing required
+evidence is an audit gap. Application roles cannot overwrite/delete
+canonical facts; protection against unrestricted infrastructure
+administrators requires separate controls.

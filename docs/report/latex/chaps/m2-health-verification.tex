@@ -1,0 +1,127 @@
+\section{M2 Health Authorization and Verification}\label{sec:m2-health}
+
+This contribution covers the authorization policy used by the
+\texttt{herd-health} service and its verification in the M2 Health
+backend. Nguyen Huu Phuc (2352938) implemented the policy library and
+verification checker, and ran the integrated backend tests on
+\texttt{staging}. The Health service and its HTTP contract are described
+in the team's implementation artifacts.\cite{m2HealthStaging,m2HealthContract}
+
+\subsection{Clinical authorization}\label{sec:m2-health-auth}
+
+The clinical slice applies the RBAC matrix in \Cref{sec:2.2.3} at the
+service boundary specified by ADR-07 (\Cref{adr:07}).
+\texttt{HealthAuthorization} gets the verified principal and applicable
+grants from its providers. Health supplies the canonical cattle and
+record context for the operation. \texttt{ClinicalAuthorizationPolicyAdapter}
+maps these values to the Java \texttt{access-policy} library and passes
+the server's decision time to the evaluator. Health denies or stops a
+protected operation when it cannot establish the required authority.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Action} & \textbf{Authorization context and scope} \\
+\midrule
+\texttt{VIEW\_CATTLE} & Match the current assigned barn for a Barn
+Supervisor (BS) or current farm for a Farm Manager (FM). An RFID outside
+the caller's scope gets the same HTTP 404 as an unknown RFID. \\
+\texttt{SUBMIT\_HEALTH} & Match the same current-custody scope for a
+new write. Health then applies lifecycle, version, dose and transaction
+checks. \\
+\texttt{READ\_HISTORY} & Evaluate each record. An FM with a valid grant
+at the record's origin farm may read that record after a transfer. \\
+\texttt{READ\_RECEIPT} & Evaluate an accepted receipt against its linked
+record. For a receipt without an accepted record, evaluate the current
+cattle scope. \\
+\bottomrule
+\end{tabularx}
+\caption{Authorization checks in the implemented Health slice.}
+\label{tab:m2-health-policy}
+\end{table}
+
+An active grant must supply the full role and scope for a decision. It
+is eligible from its start time up to its exclusive expiry, if set.
+System Administrators and Executive Management receive no clinical
+access from those roles. As an example, a manager at farm A can still
+read an eligible record originating at A after the animal moves to farm
+B. That grant cannot authorize lookup at farm B or a new submission.
+An existing intent resolves through the current receipt permission.
+The new-write version check applies to new acceptance.
+
+\subsection{Backend verification}\label{sec:m2-health-results}
+
+On 21 November 2026, the Health and policy modules were verified on
+\texttt{staging} at commit \texttt{fee7a8d}.\cite{m2HealthStaging}
+The run used Java 21, Maven and PostgreSQL 17.7 via Testcontainers.
+Flyway applied the two Health migrations and the test JVM used UTC.
+The HTTP tests used Spring MockMvc and supplied identity and current
+grants through fixtures. Run from the repository root:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily,breaklines=true,columns=fullflexible]
+mvn -B -f backend/pom.xml -pl apps/herd-health -am '-DargLine=-Duser.timezone=UTC' verify
+\end{lstlisting}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}Xrrrr@{}}
+\toprule
+\textbf{Suite} & \textbf{Passed} & \textbf{Failures} &
+  \textbf{Errors} & \textbf{Skipped} \\
+\midrule
+Access-policy unit tests & 76 & 0 & 0 & 0 \\
+Grant-fixture tests & 2 & 0 & 0 & 0 \\
+Health integration tests with PostgreSQL & 10 & 0 & 0 & 0 \\
+\midrule
+\textbf{Total} & \textbf{88} & \textbf{0} & \textbf{0} & \textbf{0} \\
+\bottomrule
+\end{tabularx}
+\caption{Maven Surefire results for the Health and policy modules.}
+\label{tab:m2-health-tests}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Case} & \textbf{Observed backend result} \\
+\midrule
+T06: Retry and version &
+Same-intent retries and concurrent submissions produced one clinical
+effect. Changed payload conflicted. A stale version recorded an outcome
+for review and created no clinical record. \\
+T07: Authorization &
+A wrong-barn write was denied. Unauthorized and unknown receipts both
+returned HTTP 404. After transfer, the origin FM could read the eligible
+record and receipt while current-cattle lookup remained out of scope. \\
+T08: Source evidence &
+The accepted retry case left one source-evidence row. A database trigger
+that failed the evidence insert rolled back the intent, record, receipt,
+evidence and outbox writes and preserved the previous resource version.
+This exercises the Health transaction in ADR-08. \\
+T09: RFID lookup &
+Unknown RFID returned no cattle and created no cattle record. Mobile
+selection and confirmation are implemented in the client
+(\Cref{sec:m2-mobile}). \\
+\bottomrule
+\end{tabularx}
+\caption{Health backend cases exercised by the integration suite.}
+\label{tab:m2-health-cases}
+\end{table}
+
+The snapshot checker separately passed 82 controls on synthetic
+fixtures, including missing effects, duplicates, changed content and
+missing source evidence. Independent QA also reran ten targeted probes.
+Checker verification against a mobile run export is pending.
+
+The Health backend results cover the fixture identity and grants shown
+above. End-to-end tests with the real identity source, mobile selection
+through receipt and history, and collector recovery still need
+separate evidence. The mobile flow, its server additions and the
+checks done so far are in \Cref{sec:m2-mobile}, including T05 offline
+capture. The gate deadline and recovery targets retain their own
+verification criteria in \Cref{sec:3}.

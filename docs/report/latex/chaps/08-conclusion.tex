@@ -1,0 +1,33 @@
+\section{Conclusion}\label{sec:8}
+
+This report analysed the VinaBeef requirements and identified three
+driving characteristics: Reliability/Durability, Performance and
+Security/Auditability. Availability is a supporting characteristic with
+its own NFR, success criterion and scenario. A comparison of concrete
+variants led to a service-based central backend with a gate core at
+each farm. The design calls for:
+
+\begin{itemize}
+\item
+  each gate read to commit at the farm within the two-second deadline,
+  with no WAN or central dependency on its path;
+\item
+  committed facts to be relayed to the central services as events, at
+  least once, with one business effect per intent;
+\item
+  each service to enforce role and scope on the resources it owns and
+  commit the required audit evidence with each covered change.
+\end{itemize}
+
+The views, commit boundaries, role and custody policy, and
+external-submission model form one consistent design, recorded in twelve
+architecture decisions and supported by the design principles in
+\Cref{sec:6}. In the M2 Health slice, the service integrated the
+authorization policy and exercised retry, scope, and
+source-evidence rollback against PostgreSQL.
+\Cref{sec:m2-health-results} records the test results. The mobile
+client (\Cref{sec:m2-mobile}) adds barn capture with RFID, explicit
+animal confirmation and durable local drafts that the Health service
+accepts only after reconnection; real grant integration and the
+hardware reader remain open. The other architecture
+criteria in \Cref{sec:3} retain their own verification scope.
