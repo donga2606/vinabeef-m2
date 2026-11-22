@@ -5,26 +5,46 @@ decisions, they guide judgement rather than impose a rule.
 
 \subsection{SOLID Principles}\label{sec:6.1}
 
+{\sloppy The table names the classes in the repository that apply each principle
+(modules \texttt{herd-health}, \texttt{access-policy} and
+\texttt{farm-edge} under \texttt{backend/}). \Cref{sec:m2-health-solid} explains the
+Health authorization slice in more detail. The M1 report used
+design-level names (\texttt{MovementRecorder}, \texttt{HeadCountCalculator},
+\texttt{AlertRule}, \texttt{ReportExporter}, \texttt{ReaderEventSource},
+\texttt{ReaderHealthMonitor}); the M2 prototype does not implement them, so
+they are replaced here by the classes that exist.\par}
+
 {\small
 \begin{longtable}[]{|>{\raggedright\arraybackslash}p{\dimexpr 0.2280\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.5092\linewidth-2\tabcolsep\relax}|>{\raggedright\arraybackslash}p{\dimexpr 0.2328\linewidth-2\tabcolsep\relax}|}
 \hline
-\textbf{Principle} & \textbf{Application in VinaBeef} & \textbf{Supports} \\ \hline
+\textbf{Principle} & \textbf{Application in VinaBeef (code)} & \textbf{Supports} \\ \hline
 \endhead
-Single Responsibility & MovementRecorder only records movement events;
-HeadCountCalculator only maintains counts derived from them. & ADR-05
-(rebuildable counts) \\ \hline
-Open/Closed & Missing, unexpected and wrong-barn rules are AlertRule
-implementations; a new rule is a new class, not an edit to the alert
-engine. & NFR-08 \\ \hline
-Liskov Substitution & Every ReportExporter (PDF, Excel, CSV) honours the
-same contract --- same rows, same scope filter --- so any one can
-replace another without changing report generation. & NFR-04, NFR-08 \\ \hline
-Interface Segregation & ReaderEventSource and ReaderHealthMonitor are
-separate interfaces, so an adapter implements only what its reader
-supports. & FR-07, FR-08 \\ \hline
-Dependency Inversion & Domain logic depends on ReaderProtocolAdapter and
-NationalDiseaseClient interfaces, not on the LLRP or HTTP
-implementations. & NFR-08, QAS08 \\ \hline
+Single Responsibility & \texttt{HealthController} handles HTTP only;
+\texttt{HealthIntentService} runs the use cases; \texttt{HealthAuthorization}
+applies the authorization decision order; \texttt{JdbcHealthRepository}
+owns the SQL. At the farm edge, \texttt{PassageClassifier} is a pure
+classification rule (no Spring, no database) and \texttt{GateService} owns
+the transaction. & NFR-08 \\ \hline
+Open/Closed & A new identity or grant source is a new bean behind
+\texttt{TrustedPrincipalProvider} or \texttt{CurrentGrantContextProvider};
+\texttt{HealthBoundaryConfiguration} registers fail-closed defaults with
+\texttt{@ConditionalOnMissingBean}, so the use cases do not change. &
+NFR-04, NFR-08 \\ \hline
+Liskov Substitution & Every \texttt{CurrentGrantContextProvider} (the JSON
+fixture \texttt{JsonFixtureCurrentGrantContextProvider} and the fail-closed
+default) either returns the grant context for the verified subject or fails
+as unavailable; an unavailable source never yields an allow. & NFR-04 \\ \hline
+Interface Segregation & Five inbound ports: \texttt{LookupCattleUseCase},
+\texttt{SubmitHealthIntentUseCase}, \texttt{GetHealthIntentReceiptUseCase},
+\texttt{GetHealthHistoryUseCase}, \texttt{ListCattleInScopeUseCase}; a
+client such as \texttt{HealthController} depends only on the operations it
+calls. & NFR-08 \\ \hline
+Dependency Inversion & \texttt{HealthIntentService} depends on
+\texttt{HealthRepository}, implemented by \texttt{JdbcHealthRepository};
+\texttt{HealthAuthorization} depends on \texttt{AccessPolicyPort},
+implemented by \texttt{ClinicalAuthorizationPolicyAdapter}, which calls
+\texttt{ClinicalAuthorizationPolicy} in \texttt{libs/access-policy} (plain
+Java, no Spring). & NFR-04, NFR-08 \\ \hline
 \end{longtable}
 }
 

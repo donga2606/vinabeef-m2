@@ -106,3 +106,32 @@ Receive outbreak and health surveillance data \\ \hline
 \begin{figure}[htbp]\centering
 \includegraphics[width=\linewidth,height=0.8\textheight,keepaspectratio]{graphics/vinabeef/fig01-use-case-diagram.png}
 \caption{Use case diagram}\label{fig:1}\end{figure}
+
+\subsection{Issues Raised in M2}\label{sec:1.7}
+
+The M2 assignment reports two issues from operation. \Cref{tab:m2-issues}
+states the architectural change for each, how it mitigates the issue and
+where it enters the architecture. Neither issue changes the three driving
+characteristics (\Cref{sec:3.3}); both raise the importance of Availability,
+which stays secondary because the assignment gives no outage target.
+
+{\small
+\begin{longtable}[]{|>{\raggedright\arraybackslash}p{0.16\linewidth}|>{\raggedright\arraybackslash}p{0.24\linewidth}|>{\raggedright\arraybackslash}p{0.26\linewidth}|>{\raggedright\arraybackslash}p{0.20\linewidth}|}
+\caption{M2 issues and architectural response}\label{tab:m2-issues}\\
+\hline
+\textbf{Issue} & \textbf{Architectural change} & \textbf{Mitigation} & \textbf{Where it enters} \\ \hline
+\endhead
+I1: barn sites frequently lose network connectivity while gate readers are processing movements &
+Each farm runs an edge core; a gate read completes locally (ADR-02, ADR-11). During WAN loss only the gate core and leased read-only access run (ADR-12). &
+Movement, head count and evidence commit in one local transaction before acknowledgement (ADR-03); the outbox relays at least once after recovery and central consumers de-duplicate (ADR-04). No WAN hop on the $\leq$2\,s path. &
+Farm edge in the C\&C and allocation views (\Cref{sec:4.3}); QAS02 (\Cref{sec:3.4.2}). \\ \hline
+I2: vaccination recording at fixed terminals is error-prone &
+A mobile client with an RFID reader records at the barn. Offline, it keeps a local draft with a stable intent ID; the Health service accepts it only online (ADR-12 M2 note). &
+Scan-and-confirm replaces typing the animal ID; idempotent intent IDs prevent duplicates on retry; acceptance re-checks current grants, custody and version, so an offline draft cannot bypass RBAC or audit. &
+Mobile client and Health API (\Cref{sec:m2-mobile}); QAS09 and QAS10 (\Cref{sec:qas09,sec:qas10}). \\ \hline
+\end{longtable}
+}
+
+Verification status: I2 is exercised end to end in the Live run
+(\Cref{sec:m2-mobile-verification}). For I1 the edge core is implemented
+(\texttt{farm-edge}), but the QAS02 outage run has not been executed.

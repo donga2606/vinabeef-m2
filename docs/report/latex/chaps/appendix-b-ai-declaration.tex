@@ -52,3 +52,17 @@ run and recorded by the group: \texttt{flutter test} 24/24, backend
 simulator, and the PostgreSQL checks for the Live intent. \\ \hline
 \end{longtable}
 }
+
+\paragraph{Nguyen Duc Phu --- Claude (Anthropic, Claude Opus 5.5) in the claude.ai app and Claude Code.}
+
+{\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.18\linewidth}|>{\raggedright\arraybackslash}p{0.76\linewidth}|}
+\hline
+\textbf{Field} & \textbf{Entry} \\ \hline
+\endhead
+\textbf{Purpose} & Inspect the repository read-only against the team plan and the M1 ADRs; draft the ADR delta, SOLID map, traceability, contribution table and this entry; write the Keycloak JWT verification and CI workflow as a patch; build, test and smoke-test it on Phu's machine (Claude Code); review Part 01 slides and report against the brief. \\ \hline
+\textbf{Main prompts} & ``Inspect the repo read-only; report which of my tasks exist in code''; ``Draft the ADR delta, SOLID map and traceability from the real code only; never invent classes, files or tests''; ``Draft the contribution section and AI declaration''; ``Apply the patch, build, run all tests with Docker, smoke-test the API, push only my branch, and write a report''; ``Cherry-pick the timestamp fix onto my branch, push, re-run CI and update my drafts''; ``Review my slides and the report before the freeze.'' \\ \hline
+\textbf{Supported outputs} & Branch \texttt{phu/security-http-ci}: \texttt{c384e52} (\texttt{HealthSecurityConfiguration} with 9 tests, \texttt{.github/workflows/ci.yml}) and \texttt{30af74b} (cherry-pick of \texttt{fee7a8d}, authored by Nguyen Huu Phuc); CI run 45013613479 (124 tests passed); not merged into \texttt{main}; drafts of \Cref{sec:1.7}, the contribution table, the code-based SOLID table (\Cref{sec:6.1}) and the ADR-07 M2 amendment; review notes (SOLID class names, ADR-07, M2 issues); defect report for Health timestamp binding and test schema. \\ \hline
+\textbf{Human review} & I set the rules for each task, read each draft before it was used, and decided what went into the report. I used Claude Code to work on the project and read its build and test results. I can explain every item in my sections. \\ \hline
+\end{longtable}
+}

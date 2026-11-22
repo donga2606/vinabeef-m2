@@ -23,8 +23,8 @@ or deleted; corrections are new linked records & D-01, D-03 \\ \hline
 ADR-06 & Only the Integration Gateway calls external systems; ambiguous
 outcomes are retried automatically only where the
 receiver' s contract makes it safe & D-01 \\ \hline
-ADR-07 & Central client traffic uses the API gateway; every owner checks
-action/scope. Farm-local read-only access checks its existing session
+ADR-07 & No API gateway in the prototype (amended M2): the Health
+service verifies the Keycloak JWT itself; every owner checks action/scope. Farm-local read-only access checks its existing session
 and unexpired scoped lease. & D-03 \\ \hline
 ADR-08 & Required audit evidence commits in the same transaction as the
 change it records & D-03, D-01 \\ \hline
@@ -52,7 +52,7 @@ and is built by a small team, so operational cost is a constraint.
 
 \textbf{Decision:} The central system is four coarse-grained services
 --- Movement \& Alert, Herd \& Health, Reporting \& Integration,
-Identity \& Admin (\Cref{sec:4.5}) --- behind an API gateway. After the farm edge commits a gate outcome (ADR-11),
+Identity \& Admin (\Cref{sec:4.5}) --- behind an API gateway in the target design (not in the M2 prototype; see ADR-07). After the farm edge commits a gate outcome (ADR-11),
 the committed facts travel as events through a message broker to the
 central services. Nothing on the gate path
 waits on a synchronous call to a central service.
@@ -187,7 +187,7 @@ during M2.
 
 \subsection{ADR-07: API gateway with service-level authorization}\label{adr:07}
 
-\textbf{Status: Accepted.}
+\textbf{Status: Accepted (M1); amended in M2.}
 
 \textbf{Context:} RBAC must apply to every request, and permissions
 depend on barn and farm scope (\Cref{sec:2.2.3}), which only the service
@@ -208,6 +208,14 @@ versions are audited. The gateway must be highly available.
 
 \textbf{Compliance:} QAS04 (wrong-farm access, SA clinical write and
 revoked export are all denied); SC-04.
+
+{\sloppy \textbf{M2 amendment:} The prototype has no API gateway. The Health
+service (\texttt{herd-health}) is an OAuth2 resource server:
+\texttt{HealthSecurityConfiguration} verifies the Keycloak JWT itself
+(signature against the realm JWKS, issuer, expiry), and
+\texttt{HealthAuthorization} checks action and scope against current
+grants on every request. A central gateway stays the target design; the
+service-level checks do not depend on it.\par}
 
 \subsection{ADR-08: Audit evidence in the same transaction}\label{adr:08}
 
