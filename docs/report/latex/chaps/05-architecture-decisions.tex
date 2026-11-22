@@ -24,7 +24,7 @@ ADR-06 & Only the Integration Gateway calls external systems; ambiguous
 outcomes are retried automatically only where the
 receiver' s contract makes it safe & D-01 \\ \hline
 ADR-07 & No API gateway in the prototype (amended M2): the Health
-service verifies the Keycloak JWT itself; every owner checks action/scope. Farm-local read-only access checks its existing session
+service verifies the Keycloak JWT itself and checks action/scope; farm-edge and movement-alert have no authentication in the prototype. In the target design every owner checks action/scope. Farm-local read-only access checks its existing session
 and unexpired scoped lease. & D-03 \\ \hline
 ADR-08 & Required audit evidence commits in the same transaction as the
 change it records & D-03, D-01 \\ \hline
@@ -215,7 +215,9 @@ service (\texttt{herd-health}) is an OAuth2 resource server:
 (signature against the realm JWKS, issuer, expiry), and
 \texttt{HealthAuthorization} checks action and scope against current
 grants on every request. A central gateway stays the target design; the
-service-level checks do not depend on it.\par}
+service-level checks do not depend on it. The \texttt{farm-edge} and
+\texttt{movement-alert} prototypes have no authentication; their ports are
+bound to the local host in the Compose profile.\par}
 
 \subsection{ADR-08: Audit evidence in the same transaction}\label{adr:08}
 
