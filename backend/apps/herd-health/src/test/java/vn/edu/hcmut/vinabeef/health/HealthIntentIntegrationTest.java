@@ -316,18 +316,22 @@ class HealthIntentIntegrationTest {
                 expectedVersion, null, recordId, "Corrected batch number after checking the vial."));
     }
 
+    /** Principal chosen by authenticate(); kept per test because the filter chain clears the holder. */
+    private Authentication principal;
+
     /**
      * Requests go through the real security filter chain. The principal chosen with authenticate()
-     * is attached to the request (the filter chain would otherwise replace a thread-local context).
+     * is attached to every request: the chain clears the thread-local context after each request,
+     * so reading it again would silently fall back to a stale test principal.
      */
     private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {
-        Authentication current = SecurityContextHolder.getContext().getAuthentication();
-        return mockMvc.perform(current == null ? request
-                : request.with(SecurityMockMvcRequestPostProcessors.authentication(current)));
+        return mockMvc.perform(principal == null ? request
+                : request.with(SecurityMockMvcRequestPostProcessors.authentication(principal)));
     }
 
     @Test
     void requestWithoutBearerTokenIsUnauthenticatedProblem() throws Exception {
+        principal = null;
         SecurityContextHolder.clearContext();
         mockMvc.perform(get("/api/v1/cattle/in-scope"))
                 .andExpect(status().isUnauthorized())
@@ -376,8 +380,8 @@ class HealthIntentIntegrationTest {
     }
 
     private void authenticate(String subjectId) {
-        SecurityContextHolder.getContext().setAuthentication(
-                UsernamePasswordAuthenticationToken.authenticated(subjectId, "unused", List.of()));
+        principal = UsernamePasswordAuthenticationToken.authenticated(subjectId, "unused", List.of());
+        SecurityContextHolder.getContext().setAuthentication(principal);
     }
 
     private long count(String table) {
