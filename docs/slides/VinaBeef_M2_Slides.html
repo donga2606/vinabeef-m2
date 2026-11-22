@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VinaBeef M2 · Group 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   WHITE CLEAN SLIDES — DESIGN SYSTEM v1
+   Source: "Management Consulting Toolkit" template, slides 1–35.
+   Canvas: 960 × 540 px (16:9). 1pt in the PPTX = 1.333px here.
+   DO NOT edit tokens per deck. Only add slide-specific rules at the bottom,
+   inside the marked "DECK-SPECIFIC" block, and only using the tokens.
+   ========================================================================== */
+:root{
+  /* ---- Color (the whole palette — nothing else is allowed) ---- */
+  --navy:  #003BA3;   /* primary: titles, headings, dark blocks, table headers */
+  --blue:  #4A8CFF;   /* accent: big numbers, highlights, icons, bullets, light blocks */
+  --gray:  #EFEFEF;   /* surfaces: cards, cells, tracks, neutral blocks */
+  --ink:   #000000;   /* body text */
+  --white: #FFFFFF;   /* background, text on navy/blue */
+
+  /* ---- Type ---- */
+  --font: 'Montserrat', Arial, Helvetica, sans-serif;
+  --fs-xs:   14.67px;  /* 11pt  credits, chart axis, footnotes */
+  --fs-sm:   16px;     /* 12pt  captions, dense body */
+  --fs-body: 18.67px;  /* 14pt  body text (default) */
+  --fs-lead: 21.33px;  /* 16pt  cover subtitle */
+  --fs-h3:   24px;     /* 18pt  item heading, card header */
+  --fs-stat: 32px;     /* 24pt  inline stat value */
+  --fs-h2:   37.33px;  /* 28pt  slide title */
+  --fs-h2l:  40px;     /* 30pt  percentage, image-slide title */
+  --fs-h1:   50.67px;  /* 38pt  photo-slide headline */
+  --fs-d4:   62.67px;  /* 47pt  section title */
+  --fs-d3:   70.67px;  /* 53pt  cover title */
+  --fs-d2:   93.33px;  /* 70-72pt  TOC numbers, section number, "Thanks" */
+  --fs-d1:   122.67px; /* 92pt  big number */
+  --lh-tight: 1.08;
+  --lh-title: 1.15;
+  --lh-body:  1.3;
+
+  /* ---- Grid ---- */
+  --W: 960px; --H: 540px;
+  --mx: 75px;          /* box edge; text sits 10px further in (PPTX inset) */
+  --inset: 10px;
+  --title-top: 40px;
+  --blk: 128px;        /* decorative block width (always) */
+  --mid: 270px;        /* horizontal midline — blocks meet here */
+  --bar: 32px;         /* footer bar / edge strip thickness */
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000}
+body{font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* ---------------- Slide canvas ---------------- */
+.deck{position:absolute;left:0;top:0;width:var(--W);height:var(--H);transform-origin:0 0}
+.slide{position:absolute;inset:0;width:var(--W);height:var(--H);overflow:hidden;background:var(--white);
+  color:var(--ink);font-family:var(--font);font-size:var(--fs-body);line-height:var(--lh-body);display:none}
+.slide.active{display:block}
+.slide *{font-family:inherit}
+
+/* ---------------- Text primitives ---------------- */
+.title{position:absolute;left:var(--mx);top:var(--title-top);width:810px;min-height:60px;padding:0 var(--inset);
+  display:flex;align-items:center;font-size:var(--fs-h2);font-weight:700;line-height:var(--lh-title);color:var(--navy)}
+.title.center{justify-content:center;text-align:center}
+.title.right{justify-content:flex-end;text-align:right}
+.h3{font-size:var(--fs-h3);font-weight:700;color:var(--navy);line-height:1.2}
+.p{font-size:var(--fs-body);line-height:var(--lh-body);color:var(--ink)}
+.sm{font-size:var(--fs-sm)}
+.xs{font-size:var(--fs-xs)}
+.hl{color:var(--blue)}               /* highlight words inside navy text */
+.navy{color:var(--navy)} .blue{color:var(--blue)}
+b,strong{font-weight:700;color:var(--navy)}
+.center{text-align:center}.right{text-align:right}
+.ul{list-style:none}
+.ul li{position:relative;padding-left:1.55em;line-height:var(--lh-body)}
+.ul li::before{content:"";position:absolute;left:.35em;top:.5em;width:.36em;height:.36em;border-radius:50%;background:var(--blue)}
+.ul li li::before{background:transparent;border:1.5px solid var(--blue)}
+.ul li+li{margin-top:.12em}
+.ul ul{list-style:none;margin-top:.12em}
+.ul.gap li+li{margin-top:.5em}
+
+/* ---------------- Decorative system ---------------- */
+.blk{position:absolute;width:var(--blk)}          /* set left/top/height inline */
+.blk.navy{background:var(--navy)} .blk.blue{background:var(--blue)} .blk.gray{background:var(--gray)}
+.footbar{position:absolute;left:0;bottom:0;width:var(--W);height:var(--bar);background:linear-gradient(90deg,var(--navy) 50%,var(--blue) 50%)}
+.footbar.rev{background:linear-gradient(90deg,var(--blue) 50%,var(--navy) 50%)}
+.edge-r{position:absolute;right:0;top:60px;bottom:0;width:var(--bar);background:var(--blue)}
+.edge-l{position:absolute;left:0;top:0;height:470px;width:var(--bar);background:var(--blue)}
+
+/* ---------------- Components ---------------- */
+.photo{display:block;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05)}
+.shot{display:block;max-width:100%;max-height:100%;object-fit:contain;border:1px solid var(--gray);background:var(--white)} /* product screenshots stay in color */
+.ph{background:var(--gray);display:flex;align-items:center;justify-content:center;color:var(--navy);font-size:var(--fs-sm);font-weight:600;text-align:center;padding:10px}
+.icon{width:44px;height:44px;stroke:var(--blue);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.dot{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--blue);vertical-align:middle}
+.dot.navy{background:var(--navy)} .dot.ink{background:var(--ink)} .dot.gray{background:var(--gray)}
+/* SVG paint helpers — never hard-code hex inside SVG, use these */
+.s-navy{stroke:var(--navy)} .s-blue{stroke:var(--blue)} .s-gray{stroke:var(--gray)} .s-white{stroke:var(--white)} .s-ink{stroke:var(--ink)}
+.f-navy{fill:var(--navy)} .f-blue{fill:var(--blue)} .f-gray{fill:var(--gray)} .f-white{fill:var(--white)} .f-ink{fill:var(--ink)} .f-none{fill:none}
+.node{display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 16px;font-size:var(--fs-body);line-height:1.2;min-height:41px}
+.node.navy{background:var(--navy);color:var(--white);font-weight:700}
+.node.blue{background:var(--blue);color:var(--white);font-weight:700}
+.node.gray{background:var(--gray);color:var(--ink)}
+.node.outline{background:var(--white);border:2px solid var(--blue);color:var(--navy)}
+.kpi{background:var(--navy);color:var(--white);text-align:center;padding:8px 18px;line-height:1.15}
+.kpi .v{font-size:var(--fs-h3);font-weight:700;display:block}
+.kpi .l{font-size:var(--fs-sm);font-weight:700;display:block}
+.tbl{border-collapse:collapse;width:100%}
+.tbl th{background:var(--navy);color:var(--white);font-weight:700;font-size:var(--fs-body);padding:9px 10px;text-align:center;line-height:1.15}
+.tbl td{padding:9px 10px;font-size:var(--fs-body);line-height:1.2;text-align:center;border-bottom:1px solid var(--gray)}
+.tbl td:first-child{text-align:left}
+.tbl th:first-child{background:transparent}
+.tbl.filled th:first-child{background:var(--navy);text-align:left}
+
+/* ===================== LAYOUTS ===================== */
+/* Absolute regions below mirror the PPTX placeholder boxes (px). */
+
+/* 01 cover */
+.l-cover .cv-title{position:absolute;left:172px;top:103px;width:710px;height:235px;padding:0 var(--inset);display:flex;flex-direction:column;justify-content:flex-end;text-align:right;font-size:var(--fs-d3);font-weight:700;line-height:var(--lh-tight);color:var(--navy)}
+.l-cover .cv-sub{position:absolute;left:172px;top:348px;width:710px;padding:0 var(--inset);text-align:right;font-size:var(--fs-lead)}
+.l-cover .cv-meta{position:absolute;right:86px;bottom:44px;text-align:right;font-size:var(--fs-sm);line-height:1.45}
+
+/* 02 toc */
+.l-toc .toc{position:absolute;left:85px;top:148px;width:820px;display:grid;grid-template-columns:417px 1fr;row-gap:28px}
+.l-toc .toc-item{display:grid;grid-template-columns:146px 1fr;column-gap:24px;align-items:start;min-height:122px}
+.l-toc .toc-num{font-size:var(--fs-d2);font-weight:700;color:var(--blue);line-height:.95;text-align:right}
+.l-toc .toc-item .h3{margin-top:2px;margin-bottom:8px}
+.l-toc .toc.rows-3{top:132px;row-gap:34px}
+.l-toc .toc.rows-3 .toc-item{min-height:0}
+.l-toc .toc.rows-3 .toc-num{font-size:var(--fs-d4)}
+
+/* 03 section (right-aligned) + .alt (left-aligned) */
+.l-section .sec{position:absolute;left:416px;top:120px;width:468px;padding:0 var(--inset);text-align:right}
+.l-section .sec-num{font-size:var(--fs-d2);font-weight:700;color:var(--blue);line-height:1}
+.l-section .sec-title{font-size:var(--fs-d4);font-weight:700;color:var(--navy);line-height:1.05;margin-top:8px}
+.l-section .sec-sub{font-size:var(--fs-body);margin-top:14px}
+.l-section.alt .sec{left:74px;text-align:left}
+
+/* 04 intro (text left, blocks right) + .alt (blocks left, text right) */
+.l-intro .txt{position:absolute;left:121px;top:140px;width:444px;padding:0 var(--inset)}
+.l-intro .txt .t{font-size:var(--fs-h2);font-weight:700;color:var(--navy);line-height:var(--lh-title);margin-bottom:14px}
+.l-intro.alt .txt{left:418px;top:150px;width:426px;text-align:right}
+
+/* 05 statement (one big line) */
+.l-statement .big{position:absolute;left:74px;top:110px;width:600px;height:320px;padding:0 var(--inset);display:flex;align-items:center;font-size:98.67px;font-weight:700;line-height:1;color:var(--navy)}
+.l-statement .big.m{font-size:var(--fs-d3)}
+
+/* 06 text (+ bullets) */
+.l-text .body{position:absolute;left:var(--mx);top:128px;width:560px;padding:0 var(--inset)}
+.l-text.wide .body{width:810px}
+.l-text .body > * + *{margin-top:14px}
+
+/* 07 two columns */
+.l-2col .cols{position:absolute;left:74px;top:200px;width:560px;display:grid;grid-template-columns:1fr 1fr;column-gap:30px;padding:0 var(--inset)}
+.l-2col .cols .h3{margin-bottom:12px}
+
+/* 08 three columns with icons */
+.l-3col .cols{position:absolute;left:82px;top:196px;width:796px;display:grid;grid-template-columns:repeat(3,1fr);column-gap:42px;text-align:center}
+.l-3col .cols .icon{margin:0 auto 4px;display:block}
+.l-3col .cols .h3{margin:6px 0 8px}
+
+/* 09 six-grid (3 × 2) */
+.l-grid6 .grid{position:absolute;left:74px;top:150px;width:720px;display:grid;grid-template-columns:repeat(3,1fr);column-gap:10px;row-gap:30px;padding:0 var(--inset)}
+.l-grid6 .grid .h3{margin-bottom:8px}
+
+/* 10 four items right-aligned (2 × 2) */
+.l-4items .grid{position:absolute;left:331px;top:160px;width:553px;display:grid;grid-template-columns:1fr 1fr;column-gap:34px;row-gap:34px;text-align:right;padding:0 var(--inset)}
+.l-4items .grid .h3{margin-bottom:8px}
+
+/* 11 quadrant / SWOT */
+.l-quad .quad{position:absolute;left:110px;top:130px;display:grid;grid-template-columns:42px 292px 292px;column-gap:20px;row-gap:20px}
+.l-quad .quad > :nth-child(3n){margin-left:50px}
+.l-quad .side{background:var(--blue);color:var(--white);font-weight:700;font-size:var(--fs-h3);writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;height:153px}
+.l-quad .q-h{background:var(--navy);color:var(--white);font-weight:700;font-size:var(--fs-h3);height:35px;padding:0 20px;display:flex;align-items:center}
+.l-quad .q-b{background:var(--gray);height:118px;padding:14px 20px}
+
+/* 12 rows (label + items) */
+.l-rows .rows{position:absolute;left:75px;top:124px;width:809px;display:flex;flex-direction:column;gap:10px}
+.l-rows .row{display:grid;grid-template-columns:199px 1fr;height:81px}
+.l-rows .row .lab{background:var(--navy);color:var(--white);font-weight:700;font-size:var(--fs-h3);line-height:1.1;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 16px}
+.l-rows .row .its{background:var(--gray);display:flex;align-items:center;justify-content:space-around;gap:20px;padding:0 24px}
+.l-rows .row .its > *{flex:1}
+
+/* 13 table / maturity */
+.l-table .tblwrap{position:absolute;left:85px;top:128px;width:810px}
+
+/* 14 process chevrons */
+.l-process .chev{position:absolute;left:75px;top:146px;width:808px;height:121px;display:flex}
+.l-process .chev > div{flex:1;background:var(--blue);color:var(--white);font-weight:700;font-size:var(--fs-h3);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 44px 0 50px;
+  clip-path:polygon(0 0,calc(100% - 40px) 0,100% 50%,calc(100% - 40px) 100%,0 100%,40px 50%)}
+.l-process .chev > div:first-child{clip-path:polygon(0 0,calc(100% - 40px) 0,100% 50%,calc(100% - 40px) 100%,0 100%);padding-left:20px}
+.l-process .chev > div + div{margin-left:-36px}
+.l-process .notes{position:absolute;left:75px;top:286px;width:808px;display:grid;column-gap:14px}
+
+/* 15 roadmap stairs */
+.l-roadmap .stairs{position:absolute;left:75px;top:170px;width:809px;display:grid;grid-template-columns:repeat(var(--n,3),1fr);align-items:start}
+.l-roadmap .step{margin-top:calc(var(--rise,33px) * (var(--n,3) - 1 - var(--i,0)))}
+.l-roadmap .step .h3{text-align:center;padding-bottom:10px}
+.l-roadmap .step .line{height:8px;background:var(--blue);position:relative}
+.l-roadmap .step + .step .line::before{content:"";position:absolute;left:0;bottom:0;width:8px;height:calc(var(--rise,33px) + 8px);background:var(--blue)}
+.l-roadmap .step .ul{padding:14px 10px 0 20px}
+
+/* 16 hierarchy tree (top-down) */
+.l-tree .tree{position:absolute;left:75px;top:120px;width:809px;display:flex;justify-content:center}
+.tree ul{display:flex;justify-content:center;padding-top:30px;position:relative;list-style:none}
+.tree > ul{padding-top:0}
+.tree li{position:relative;padding:30px 6px 0;display:flex;flex-direction:column;align-items:center}
+.tree > ul > li{padding-top:0}
+.tree li::before,.tree li::after{content:"";position:absolute;top:0;width:50%;height:30px;border-top:2px solid var(--blue)}
+.tree li::before{right:50%}
+.tree li::after{left:50%;border-left:2px solid var(--blue)}
+.tree li:only-child::before,.tree li:only-child::after{border-top:0}
+.tree li:first-child::before,.tree li:last-child::after{border-top:0}
+.tree li:last-child::before{border-right:2px solid var(--blue);width:calc(50% + 1px)}
+.tree li:last-child::before{right:calc(50% - 1px)}
+.tree li:last-child::after{border-left:0}
+.tree > ul > li::before,.tree > ul > li::after{display:none}
+.tree ul ul::before{content:"";position:absolute;top:0;left:50%;height:30px;border-left:2px solid var(--blue)}
+.tree .node{white-space:nowrap}
+.tree .lv1{min-width:161px;font-size:var(--fs-h3)}
+.tree .lv2{min-width:136px}
+.tree .lv3{min-width:78px;padding:6px 12px}
+
+/* 17 breakdown (left → right) */
+.l-breakdown .bd{position:absolute;left:170px;top:118px;height:380px;display:flex;align-items:center}
+.bd .root{width:128px;min-height:116px;font-size:var(--fs-h3);text-align:left;justify-content:flex-start;padding:10px 12px}
+.bd .groups{display:flex;flex-direction:column;gap:26px;margin-left:30px;position:relative;padding-left:0}
+.bd .groups::before{content:"";position:absolute;left:-16px;top:58px;bottom:58px;border-left:2px solid var(--blue)}
+.bd .grp{display:flex;align-items:center;position:relative}
+.bd .grp::before{content:"";position:absolute;left:-16px;top:50%;width:16px;border-top:2px solid var(--blue)}
+.bd .grp > .node{width:128px;min-height:116px;font-size:var(--fs-h3);font-weight:700;color:var(--navy);justify-content:flex-start;text-align:left}
+.bd .leaves{display:flex;flex-direction:column;justify-content:space-between;gap:10px;margin-left:36px;position:relative;align-self:stretch}
+.bd .leaves::before{content:"";position:absolute;left:-18px;top:20px;bottom:20px;border-left:2px solid var(--blue)}
+.bd .leaves::after{content:"";position:absolute;left:-36px;top:50%;width:18px;border-top:2px solid var(--blue)}
+.bd .leaves .node{position:relative;width:170px;min-height:38px;justify-content:flex-start;font-size:var(--fs-sm);text-align:left}
+.bd .leaves .node::before{content:"";position:absolute;left:-18px;top:50%;width:18px;border-top:2px solid var(--blue)}
+
+/* 18 matrix 2×2 */
+.l-matrix .mx{position:absolute;left:120px;top:118px;display:grid;grid-template-columns:150px 36px 216px 216px;grid-template-rows:42px 111px 111px 36px 40px;column-gap:10px;row-gap:5px;align-items:center}
+.l-matrix .mx .cell{height:111px;background:var(--gray);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 18px;line-height:1.2}
+.l-matrix .mx .cell.on{background:var(--navy);color:var(--white)}
+.l-matrix .mx .tick{color:var(--navy);text-align:center;font-size:var(--fs-body)}
+.l-matrix .mx .tick.y{writing-mode:vertical-rl;transform:rotate(180deg);justify-self:center}
+.l-matrix .mx .axis{font-weight:700;color:var(--navy);font-size:var(--fs-h3);text-align:center}
+
+/* 19 cycle (4-part ring) */
+.l-cycle .ring{position:absolute;left:330px;top:128px;width:300px;height:300px}
+.l-cycle .lbl{position:absolute;display:flex;align-items:center;gap:10px;font-size:var(--fs-body);white-space:nowrap}
+.l-cycle .lbl i{display:block;height:2px;width:36px}
+.l-cycle .lbl i::after{content:"";display:block;width:8px;height:8px;border-radius:50%;margin-top:-3px}
+.l-cycle .lbl.l{right:640px;flex-direction:row}
+.l-cycle .lbl.r{left:640px}
+.l-cycle .lbl.navy i,.l-cycle .lbl.navy i::after{background:var(--navy)}
+.l-cycle .lbl.blue i,.l-cycle .lbl.blue i::after{background:var(--blue)}
+.l-cycle .lbl.l i::after{margin-left:28px}
+.l-cycle .lbl.r i::after{margin-left:0}
+
+/* 20 diagram (free canvas) */
+.l-diagram .stage{position:absolute;left:var(--mx);top:128px;width:810px;height:370px;display:flex;align-items:center;justify-content:center}
+.l-diagram.has-bar .stage{height:340px}
+.l-diagram .title.two{min-height:98px}
+
+/* 21 quote */
+.l-quote .q{position:absolute;left:281px;top:110px;width:604px;height:214px;padding:0 var(--inset);display:flex;align-items:flex-end;justify-content:flex-end;text-align:right;font-size:var(--fs-h2);font-weight:600;line-height:1.2;color:var(--blue)}
+.l-quote .by{position:absolute;left:281px;top:346px;width:604px;padding:0 var(--inset);text-align:right;font-size:var(--fs-h3);font-weight:700;color:var(--navy)}
+
+/* 22 big number */
+.l-bignum .num{position:absolute;left:74px;top:148px;width:810px;height:174px;display:flex;align-items:flex-end;justify-content:center;font-size:var(--fs-d1);font-weight:700;color:var(--blue);line-height:1}
+.l-bignum .cap{position:absolute;left:74px;top:334px;width:810px;text-align:center}
+
+/* 23 photo full-bleed + headline */
+.l-photo .bg{position:absolute;inset:0}
+.l-photo .wash{position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.85) 0%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 70%)}
+.l-photo .head{position:absolute;left:74px;top:52px;width:480px;padding:0 var(--inset);font-size:var(--fs-h1);font-weight:700;line-height:1.12;color:var(--navy)}
+
+/* 24 photo left + text right */
+.l-photoleft .pic{position:absolute;left:0;top:112px;width:349px;height:314px}
+.l-photoleft .txt{position:absolute;left:391px;top:150px;width:493px;padding:0 var(--inset);text-align:right}
+.l-photoleft .txt .t{font-size:var(--fs-h2l);font-weight:700;color:var(--navy);line-height:var(--lh-title);margin-bottom:16px}
+
+/* 25 demo / screenshot */
+.l-demo .side{position:absolute;left:var(--mx);top:128px;width:300px;padding:0 var(--inset)}
+.l-demo .side .h3{margin-bottom:10px}
+.l-demo .screen{position:absolute;left:392px;top:120px;width:500px;height:380px;display:flex;align-items:center;justify-content:center}
+
+/* 26 stats bars */
+.l-bars .grp{position:absolute;top:140px;width:330px}
+.l-bars .grp.l{left:75px}
+.l-bars .grp.r{left:555px;text-align:right}
+.l-bars .grp .h3{margin-bottom:10px;padding:0 var(--inset)}
+.l-bars .bar{display:grid;grid-template-columns:90px 1fr;align-items:center;column-gap:8px;height:44px;padding:0 var(--inset)}
+.l-bars .grp.r .bar{grid-template-columns:1fr auto}
+.l-bars .bar .v{white-space:nowrap}
+.l-bars .bar .v{font-size:var(--fs-stat);font-weight:700;color:var(--navy);line-height:1}
+.l-bars .bar .track{height:12px;background:var(--gray);position:relative}
+.l-bars .bar .track span{position:absolute;top:0;bottom:0;left:0;background:var(--blue)}
+.l-bars .grp.r .bar .track span{left:auto;right:0}
+.l-bars .foot{position:absolute;left:75px;top:302px;width:809px;text-align:center}
+.l-bars .foot .icons{display:flex;justify-content:center;gap:22px;margin-top:18px}
+
+/* 27 donut percentages */
+.l-donuts .cols{position:absolute;left:78px;top:160px;width:801px;display:grid;grid-template-columns:repeat(var(--n,3),1fr);column-gap:40px;text-align:center}
+.l-donuts .ring{width:120px;height:120px;margin:0 auto;display:block}
+.l-donuts .pct{font-size:var(--fs-h2l);font-weight:700;color:var(--blue);margin:14px 0 6px;line-height:1}
+
+/* 28 chart + KPI */
+.l-chart .left{position:absolute;left:85px;top:122px;width:390px}
+.l-chart .right{position:absolute;left:500px;top:122px;width:390px}
+.l-chart svg text{font-family:var(--font)}
+
+/* 29 team */
+.l-team .grid{position:absolute;left:75px;top:128px;width:809px;display:flex;justify-content:center;gap:var(--gap,90px)}
+.l-team .m{width:var(--w,237px);text-align:center}
+.l-team .m .face{width:var(--d,192px);height:var(--d,192px);border-radius:50%;overflow:hidden;margin:0 auto 18px;background:var(--gray)}
+.l-team .m .h3{margin-bottom:6px}
+
+/* 30 testimonials */
+.l-testi .list{position:absolute;left:115px;top:160px;width:320px;padding:0 var(--inset)}
+.l-testi .list .by{font-size:var(--fs-h3);font-weight:700;color:var(--navy);margin-top:6px}
+.l-testi .list > div + div{margin-top:34px}
+
+/* 31 thanks / closing */
+.l-thanks .big{position:absolute;left:74px;top:46px;width:560px;height:140px;padding:0 var(--inset);display:flex;align-items:flex-end;font-size:var(--fs-d2);font-weight:700;color:var(--navy);line-height:1}
+.l-thanks .info{position:absolute;left:74px;top:198px;width:480px;padding:0 var(--inset)}
+.l-thanks .info .icons{display:flex;gap:10px;margin-top:22px}
+
+/* ===================== DECK-SPECIFIC (keep tiny, tokens only) ===================== */
+.l-toc .toc.rows-3{left:50px}
+.l-toc .toc.rows-3 .toc-item:last-child:nth-child(odd){grid-column:1 / -1;justify-self:center;width:417px}
+
+
+/* ===================== Presentation shell (not part of the look) ===================== */
+.hud{position:fixed;right:14px;bottom:12px;font:600 12px/1 var(--font);color:rgba(255,255,255,.55);letter-spacing:.04em;user-select:none;z-index:9}
+body.overview{overflow:auto;background:#000}
+body.overview .deck{position:static;transform:none!important;width:auto;height:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;padding:18px}
+body.overview .slide{position:relative;display:block;zoom:.32;cursor:pointer;outline:0}
+body.overview .slide.active{outline:10px solid var(--blue)}
+@media print{
+  @page{size:960px 540px;margin:0}
+  html,body{background:#fff;overflow:visible;height:auto}
+  .deck{position:static;transform:none!important;width:auto;height:auto}
+  .slide{position:relative;display:block!important;break-after:page;page-break-after:always}
+  .hud{display:none}
+}
+</style>
+</head>
+<body>
+<main class="deck">
+<!-- ================= SLIDES START ================= -->
+<!-- ===== Part 1: Context & drivers ===== -->
+<section class="slide l-cover">
+  <div class="blk blue" style="left:0;top:0;height:270px"></div>
+  <h1 class="cv-title"><span>VinaBeef RFID</span><span><span class="hl">livestock</span> system</span></h1>
+  <p class="cv-sub">Architecture design and M2 implementation</p>
+  <p class="cv-meta"><b>Group 2</b> · Advisor: Truong Thi Thai Minh<br>Phan Ho Duy Thong · Nguyen Huu Phuc · Le Tran Khanh · Dang The Dong A · Nguyen Duc Phu<br>Software Architecture (CO5185) · HCMUT · November 2026</p>
+</section>
+
+<section class="slide l-toc">
+  <h2 class="title center">Agenda</h2>
+  <div class="toc rows-3">
+    <div class="toc-item"><div class="toc-num">01</div><div><div class="h3">Context</div><p>Scope, issues, drivers</p></div></div>
+    <div class="toc-item"><div class="toc-num">02</div><div><div class="h3">Architecture</div><p>Style, views, gate path</p></div></div>
+    <div class="toc-item"><div class="toc-num">03</div><div><div class="h3">Decisions</div><p>ADRs, SOLID, reflection</p></div></div>
+    <div class="toc-item"><div class="toc-num">04</div><div><div class="h3">Mobile capture</div><p>Offline barn recording</p></div></div>
+    <div class="toc-item"><div class="toc-num">05</div><div><div class="h3">Health access</div><p>Policy, tests, conclusion</p></div></div>
+  </div>
+  <div class="footbar"></div>
+</section>
+
+<section class="slide l-section">
+  <div class="blk gray" style="left:151px;top:270px;height:167px"></div>
+  <div class="blk blue" style="left:279px;top:0;height:270px"></div>
+  <div class="sec">
+    <div class="sec-num">01</div>
+    <div class="sec-title">Context</div>
+    <p class="sec-sub">What VinaBeef needs, and what M2 added</p>
+  </div>
+</section>
+
+<section class="slide l-diagram">
+  <h2 class="title center">System context and scale</h2>
+  <div class="stage">
+    <svg width="810" height="340" viewBox="0 0 810 340">
+      <defs><marker id="mk4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="f-navy"/></marker></defs>
+      <g class="f-gray"><rect x="0" y="10" width="230" height="58"/><rect x="0" y="98" width="230" height="58"/><rect x="0" y="186" width="230" height="58"/><rect x="0" y="274" width="230" height="58"/></g>
+      <g class="f-navy" font-size="16" font-weight="700" text-anchor="middle">
+        <text x="115" y="45">Barn Supervisor</text><text x="115" y="133">Farm Manager</text>
+        <text x="115" y="221">System Administrator</text><text x="115" y="309">Executive Management</text>
+      </g>
+      <g class="s-navy" stroke-width="2" marker-end="url(#mk4)">
+        <line x1="230" y1="39" x2="298" y2="39"/><line x1="230" y1="127" x2="298" y2="127"/>
+        <line x1="230" y1="215" x2="298" y2="215"/><line x1="230" y1="303" x2="298" y2="303"/>
+        <line x1="580" y1="75" x2="512" y2="75"/><line x1="510" y1="265" x2="578" y2="265"/>
+      </g>
+      <rect class="f-navy" x="300" y="10" width="210" height="322"/>
+      <g class="f-white" text-anchor="middle">
+        <text x="405" y="50" font-size="22" font-weight="700">VinaBeef</text>
+        <text x="405" y="122" font-size="34" font-weight="700">25,000</text><text x="405" y="146" font-size="15">cattle</text>
+        <text x="405" y="204" font-size="34" font-weight="700">120</text><text x="405" y="228" font-size="15">barns</text>
+        <text x="405" y="286" font-size="34" font-weight="700">3</text><text x="405" y="310" font-size="15">farms</text>
+      </g>
+      <line class="s-blue" stroke-width="2" x1="335" y1="68" x2="475" y2="68"/>
+      <g class="f-white s-blue" stroke-width="2"><rect x="580" y="40" width="230" height="70"/><rect x="580" y="230" width="230" height="70"/></g>
+      <g text-anchor="middle">
+        <text class="f-navy" x="695" y="70" font-size="16" font-weight="700">RFID gate readers</text>
+        <text class="f-ink" x="695" y="93" font-size="14">IN/OUT antenna pairs</text>
+        <text class="f-navy" x="695" y="259" font-size="15" font-weight="700">National Animal Disease</text>
+        <text class="f-navy" x="695" y="280" font-size="15" font-weight="700">Control System</text>
+        <text class="f-ink" x="546" y="66" font-size="13">reads</text>
+        <text class="f-ink" x="544" y="256" font-size="13">API</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section class="slide l-2col">
+  <div class="blk gray" style="left:661px;top:0;height:215px"></div>
+  <div class="blk blue" style="left:789px;top:215px;height:270px"></div>
+  <h2 class="title">Two issues raised in M2</h2>
+  <div class="cols">
+    <div>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg>
+      <div class="h3">Barns lose network</div>
+      <p>Readers keep reading while the WAN drops. Every passage must still be recorded, within 2 seconds.</p>
+      <p class="sm blue" style="margin-top:10px"><b>Answered in Part 2</b></p>
+    </div>
+    <div>
+      <svg class="icon" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+      <div class="h3">Records at the barn</div>
+      <p>Fixed terminals cause errors. Supervisors need a phone and RFID reader where the animals are.</p>
+      <p class="sm blue" style="margin-top:10px"><b>Answered in Part 4</b></p>
+    </div>
+  </div>
+</section>
+
+<section class="slide l-3col">
+  <h2 class="title center">Three driving characteristics</h2>
+  <div class="cols">
+    <div>
+      <svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+      <div class="h3">Reliability</div><p>Zero lost movement or health records, one effect per intent</p>
+    </div>
+    <div>
+      <svg class="icon" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
+      <div class="h3">Performance</div><p>Every gate read completes within 2 seconds at peak</p>
+    </div>
+    <div>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+      <div class="h3">Security &amp; audit</div><p>RBAC by role, action and scope; every change audited</p>
+    </div>
+  </div>
+  <div class="footbar rev"></div>
+</section>
+
+<!-- ===== Part 2: Architecture ===== -->
+<section class="slide l-section alt">
+  <div class="blk gray" style="left:553px;top:102px;height:168px"></div>
+  <div class="blk blue" style="left:681px;top:270px;height:270px"></div>
+  <div class="sec">
+    <div class="sec-num">02</div>
+    <div class="sec-title">Architecture</div>
+    <p class="sec-sub">Which style, and how a gate read stays local</p>
+  </div>
+</section>
+
+<section class="slide l-chart">
+  <h2 class="title">Comparing seven style variants</h2>
+  <div class="left">
+    <svg width="390" height="232" viewBox="0 0 390 232">
+      <g class="f-ink" font-size="13">
+        <text x="0" y="25">V1 Layered</text><text x="0" y="57">V2 Modular</text><text x="0" y="89">V3 Microkernel</text>
+        <text x="0" y="121" class="f-navy" font-weight="700">V4 Service + edge</text>
+        <text x="0" y="153">V5 Event-driven</text><text x="0" y="185">V6 Micro + edge</text><text x="0" y="217">V2E Modular + edge</text>
+      </g>
+      <g class="f-blue">
+        <rect x="150" y="10" width="108" height="20"/><rect x="150" y="42" width="108" height="20"/><rect x="150" y="74" width="102" height="20"/>
+        <rect x="150" y="138" width="120" height="20"/><rect x="150" y="170" width="145" height="20"/><rect x="150" y="202" width="154" height="20"/>
+      </g>
+      <rect class="f-navy" x="150" y="106" width="154" height="20"/>
+      <g class="f-navy" font-size="13" font-weight="700">
+        <text x="264" y="25">35</text><text x="264" y="57">35</text><text x="258" y="89">33</text><text x="310" y="121">50</text>
+        <text x="276" y="153">39</text><text x="301" y="185">47</text><text x="310" y="217">50</text>
+      </g>
+    </svg>
+    <p class="sm" style="margin-top:10px">Weighted score out of 65; the group's assessment, not a measurement.</p>
+  </div>
+  <div class="right">
+    <div class="kpi" style="width:380px;margin:0 0 18px 0"><span class="v">V4 selected · 50/65</span><span class="l">Service-based + farm edge</span></div>
+    <ul class="ul sm gap" style="text-align:left">
+      <li>Drivers weigh ×3, availability ×2, the rest ×1</li>
+      <li>V2E ties at 50; V4 wins on service ownership</li>
+      <li>V6 (47): finer split not justified yet</li>
+      <li>V1–V3: every gate read crosses the WAN</li>
+    </ul>
+  </div>
+  <div class="edge-r"></div>
+</section>
+
+<section class="slide l-diagram">
+  <h2 class="title center">Edge at each farm, four services</h2>
+  <div class="stage">
+    <svg width="810" height="370" viewBox="0 0 810 370">
+      <defs><marker id="mk9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="f-navy"/></marker></defs>
+      <rect class="f-gray" x="0" y="0" width="210" height="370"/>
+      <text class="f-navy" x="15" y="28" font-size="16" font-weight="700">Farm site ×3</text>
+      <rect class="f-white s-blue" stroke-width="2" x="15" y="45" width="180" height="46"/>
+      <text class="f-navy" x="105" y="73" font-size="15" font-weight="700" text-anchor="middle">RFID gate reader</text>
+      <rect class="f-blue" x="15" y="125" width="180" height="62"/>
+      <text class="f-white" x="105" y="151" font-size="16" font-weight="700" text-anchor="middle">Edge Core</text>
+      <text class="f-white" x="105" y="173" font-size="14" text-anchor="middle">Spring Boot</text>
+      <rect class="f-white s-navy" stroke-width="2" x="15" y="221" width="180" height="62"/>
+      <text class="f-navy" x="105" y="247" font-size="15" font-weight="700" text-anchor="middle">Edge PostgreSQL</text>
+      <text class="f-ink" x="105" y="269" font-size="13" text-anchor="middle">facts, evidence, outbox</text>
+      <text class="f-navy" x="105" y="325" font-size="15" font-weight="700" text-anchor="middle">Gate path ends here</text>
+      <text class="f-ink" x="105" y="346" font-size="13" text-anchor="middle">2 s target, no WAN on it</text>
+      <g class="f-ink" font-size="13"><text x="113" y="112">LLRP</text><text x="113" y="208">commit</text><text x="214" y="146" text-anchor="start">AMQP</text></g>
+      <rect class="f-navy" x="264" y="125" width="126" height="62"/>
+      <text class="f-white" x="327" y="151" font-size="16" font-weight="700" text-anchor="middle">RabbitMQ</text>
+      <text class="f-white" x="327" y="173" font-size="13" text-anchor="middle">quorum queues</text>
+      <rect class="f-gray" x="430" y="0" width="380" height="40"/>
+      <text class="f-navy" x="620" y="25" font-size="15" font-weight="700" text-anchor="middle">Web and mobile clients</text>
+      <rect class="f-navy" x="430" y="62" width="380" height="44"/>
+      <text class="f-white" x="620" y="89" font-size="15" font-weight="700" text-anchor="middle">API Gateway · authentication</text>
+      <g class="f-blue"><rect x="430" y="128" width="185" height="52"/><rect x="625" y="128" width="185" height="52"/><rect x="430" y="188" width="185" height="52"/><rect x="625" y="188" width="185" height="52"/></g>
+      <g class="f-white" font-size="14" font-weight="700" text-anchor="middle">
+        <text x="522" y="150">Movement</text><text x="522" y="169">&amp; Alert</text>
+        <text x="717" y="150">Herd &amp;</text><text x="717" y="169">Health</text>
+        <text x="522" y="210">Identity &amp;</text><text x="522" y="229">Admin</text>
+        <text x="717" y="210">Reporting &amp;</text><text x="717" y="229">Integration</text>
+      </g>
+      <rect class="f-white s-navy" stroke-width="2" x="430" y="280" width="185" height="50"/>
+      <text class="f-navy" x="522" y="301" font-size="15" font-weight="700" text-anchor="middle">Central PostgreSQL</text>
+      <text class="f-ink" x="522" y="320" font-size="13" text-anchor="middle">one schema per service</text>
+      <rect class="f-white s-blue" stroke-width="2" x="625" y="280" width="185" height="50"/>
+      <text class="f-navy" x="717" y="301" font-size="15" font-weight="700" text-anchor="middle">National API</text>
+      <text class="f-ink" x="717" y="320" font-size="13" text-anchor="middle">contract-qualified HTTPS</text>
+      <text class="f-ink" x="620" y="358" font-size="13" text-anchor="middle">Each service re-checks scope on its own resources</text>
+      <g class="s-navy" stroke-width="2" marker-end="url(#mk9)">
+        <line x1="105" y1="91" x2="105" y2="123"/><line x1="105" y1="187" x2="105" y2="219"/>
+        <line x1="195" y1="156" x2="262" y2="156"/><line x1="390" y1="154" x2="428" y2="154"/>
+        <line x1="620" y1="40" x2="620" y2="60"/><line x1="522" y1="106" x2="522" y2="126"/><line x1="717" y1="106" x2="717" y2="126"/>
+        <line x1="522" y1="240" x2="522" y2="278"/><line x1="717" y1="240" x2="717" y2="278"/>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section class="slide l-process">
+  <h2 class="title">A gate read never waits on the WAN</h2>
+  <div class="chev"><div>Read</div><div>Classify</div><div>Commit locally</div><div>Relay</div></div>
+  <div class="notes" style="grid-template-columns:repeat(4,1fr)">
+    <ul class="ul"><li>LLRP on LAN</li><li>Tag ID and time</li></ul>
+    <ul class="ul"><li>Collapse repeat reads</li><li>Set IN or OUT</li></ul>
+    <ul class="ul"><li>Fact, count, evidence, outbox</li><li>One transaction, then ACK</li><li>2 s design target</li></ul>
+    <ul class="ul"><li>At least once to central</li><li>Idempotent by event ID</li></ul>
+  </div>
+  <div class="edge-r"></div>
+</section>
+
+<section class="slide l-diagram">
+  <h2 class="title center">Deployment and WAN outage</h2>
+  <div class="stage">
+    <svg width="810" height="370" viewBox="0 0 810 370">
+      <defs><marker id="mk11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="f-navy"/></marker></defs>
+      <rect class="f-gray" x="0" y="0" width="340" height="250"/>
+      <text class="f-navy" x="15" y="28" font-size="16" font-weight="700">Farm site ×3</text>
+      <g class="f-white s-navy" stroke-width="2"><rect x="15" y="105" width="310" height="80"/><rect x="15" y="203" width="310" height="36"/></g>
+      <rect class="f-white s-blue" stroke-width="2" x="15" y="45" width="310" height="40"/>
+      <g text-anchor="middle">
+        <text class="f-navy" x="170" y="70" font-size="15" font-weight="700">RFID gate reader</text>
+        <text class="f-navy" x="170" y="133" font-size="15" font-weight="700">Edge server (Docker)</text>
+        <text class="f-ink" x="170" y="155" font-size="14">Edge Core + PostgreSQL</text>
+        <text class="f-ink" x="170" y="175" font-size="13">SSD + UPS</text>
+        <text class="f-navy" x="170" y="226" font-size="14" font-weight="700">Farm VPN router</text>
+      </g>
+      <rect class="f-gray" x="470" y="0" width="340" height="250"/>
+      <text class="f-navy" x="485" y="28" font-size="16" font-weight="700">Central site</text>
+      <rect class="f-navy" x="485" y="45" width="310" height="40"/>
+      <rect class="f-blue" x="485" y="93" width="310" height="40"/>
+      <g class="f-white s-navy" stroke-width="2"><rect x="485" y="141" width="150" height="54"/><rect x="645" y="141" width="150" height="54"/><rect x="485" y="203" width="310" height="36"/></g>
+      <g text-anchor="middle">
+        <text class="f-white" x="640" y="70" font-size="15" font-weight="700">API Gateway (DMZ)</text>
+        <text class="f-white" x="640" y="118" font-size="15" font-weight="700">Four Spring Boot services</text>
+        <text class="f-navy" x="560" y="164" font-size="14" font-weight="700">RabbitMQ</text>
+        <text class="f-ink" x="560" y="183" font-size="13">3 quorum nodes</text>
+        <text class="f-navy" x="720" y="164" font-size="14" font-weight="700">PostgreSQL</text>
+        <text class="f-ink" x="720" y="183" font-size="13">+ sync standby</text>
+        <text class="f-navy" x="640" y="226" font-size="14" font-weight="700">Central VPN gateway</text>
+        <text class="f-ink" x="405" y="208" font-size="13">IPsec VPN</text>
+        <text class="f-blue" x="405" y="247" font-size="13" font-weight="700">WAN may drop</text>
+      </g>
+      <g class="s-navy" stroke-width="2" marker-end="url(#mk11)"><line x1="170" y1="85" x2="170" y2="103"/><line x1="170" y1="185" x2="170" y2="201"/></g>
+      <line class="s-navy" stroke-width="2" stroke-dasharray="6 5" x1="325" y1="221" x2="483" y2="221" marker-end="url(#mk11)"/>
+      <g class="s-blue" stroke-width="3"><line x1="395" y1="211" x2="415" y2="231"/><line x1="415" y1="211" x2="395" y2="231"/></g>
+      <rect class="f-navy" x="0" y="272" width="340" height="98"/>
+      <rect class="f-blue" x="470" y="272" width="340" height="98"/>
+      <line class="s-navy" stroke-width="2" x1="352" y1="321" x2="456" y2="321" marker-end="url(#mk11)"/>
+      <g class="f-white">
+        <text x="20" y="298" font-size="18" font-weight="700">WAN down</text>
+        <text x="20" y="320" font-size="14">Gate capture continues locally</text>
+        <text x="20" y="340" font-size="14">Leased local reads still work</text>
+        <text x="20" y="360" font-size="14">Clinical writes, new logins: online-only</text>
+        <text x="490" y="298" font-size="18" font-weight="700">WAN back</text>
+        <text x="490" y="320" font-size="14">Outbox replays the backlog</text>
+        <text x="490" y="340" font-size="14">Delivered at least once</text>
+        <text x="490" y="360" font-size="14">Target: cleared within 600 s</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- ===== Part 3: Decisions & principles ===== -->
+<section class="slide l-section">
+  <div class="blk gray" style="left:151px;top:270px;height:167px"></div>
+  <div class="blk blue" style="left:279px;top:0;height:270px"></div>
+  <div class="sec">
+    <div class="sec-num">03</div>
+    <div class="sec-title">Decisions</div>
+    <p class="sec-sub">Twelve ADRs, SOLID, and what testing taught us</p>
+  </div>
+</section>
+
+<section class="slide l-grid6">
+  <div class="blk blue" style="left:832px;top:0;height:270px"></div>
+  <div class="blk navy" style="left:832px;top:270px;height:270px"></div>
+  <h2 class="title">Six key decisions of twelve</h2>
+  <div class="grid">
+    <div><div class="h3">Edge per farm</div><p><span class="hl">ADR-02</span> Gate path never needs the WAN</p></div>
+    <div><div class="h3">Persist first</div><p><span class="hl">ADR-03</span> ACK only after commit</p></div>
+    <div><div class="h3">Idempotent</div><p><span class="hl">ADR-04</span> Writes dedupe on a stable ID</p></div>
+    <div><div class="h3">Append-only</div><p><span class="hl">ADR-05</span> Never edited; corrections link</p></div>
+    <div><div class="h3">Owner checks</div><p><span class="hl">ADR-07</span> Each service rechecks scope</p></div>
+    <div><div class="h3">Audit in-TX</div><p><span class="hl">ADR-08</span> Same commit as the change</p></div>
+  </div>
+</section>
+
+<section class="slide l-table">
+  <h2 class="title">SOLID in the VinaBeef design</h2>
+  <div class="tblwrap">
+    <table class="tbl filled">
+      <thead><tr><th style="width:230px">Principle</th><th style="text-align:left">Applied as</th></tr></thead>
+      <tbody>
+        <tr><td><b>Single resp.</b></td><td style="text-align:left">MovementRecorder records; HeadCountCalculator counts</td></tr>
+        <tr><td><b>Open/closed</b></td><td style="text-align:left">A new alert rule is a new AlertRule class</td></tr>
+        <tr><td><b>Liskov</b></td><td style="text-align:left">Any ReportExporter (PDF, Excel, CSV) gives the same rows</td></tr>
+        <tr><td><b>Interface seg.</b></td><td style="text-align:left">ReaderEventSource and ReaderHealthMonitor are separate</td></tr>
+        <tr><td><b>Dependency inv.</b></td><td style="text-align:left">Domain depends on ports, not LLRP or HTTP code</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="edge-r"></div>
+</section>
+
+<section class="slide l-diagram">
+  <h2 class="title center">Dependency inversion in Health</h2>
+  <div class="stage">
+    <svg width="810" height="370" viewBox="0 0 810 370">
+      <defs>
+        <marker id="mk15" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="f-navy"/></marker>
+        <marker id="mk15o" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto"><path d="M1 1L11 6L1 11z" class="f-white s-navy" stroke-width="1.5"/></marker>
+      </defs>
+      <rect class="f-navy" x="230" y="10" width="350" height="66"/>
+      <text class="f-white" x="405" y="38" font-size="16" font-weight="700" text-anchor="middle">Health application service</text>
+      <text class="f-white" x="405" y="60" font-size="13" text-anchor="middle">enforces the decision, audit, retry</text>
+      <rect class="f-blue" x="230" y="116" width="350" height="50"/>
+      <text class="f-white" x="405" y="146" font-size="16" font-weight="700" text-anchor="middle">AccessPolicyPort (interface)</text>
+      <rect class="f-white s-blue" stroke-width="2" x="200" y="222" width="410" height="50"/>
+      <text class="f-navy" x="405" y="252" font-size="15" font-weight="700" text-anchor="middle">ClinicalAuthorizationPolicyAdapter</text>
+      <rect class="f-gray" x="200" y="310" width="410" height="54"/>
+      <text class="f-navy" x="405" y="333" font-size="15" font-weight="700" text-anchor="middle">access-policy library</text>
+      <text class="f-ink" x="405" y="353" font-size="13" text-anchor="middle">pure Java, no Spring, no database</text>
+      <g class="s-navy" stroke-width="2">
+        <line x1="405" y1="76" x2="405" y2="114" marker-end="url(#mk15)"/>
+        <line x1="405" y1="220" x2="405" y2="170" stroke-dasharray="6 4" marker-end="url(#mk15o)"/>
+        <line x1="405" y1="272" x2="405" y2="308" marker-end="url(#mk15)"/>
+      </g>
+      <g class="f-ink" font-size="13"><text x="415" y="100">calls</text><text x="415" y="200">implements</text><text x="415" y="294">maps to</text></g>
+      <g font-size="13">
+        <g text-anchor="end">
+          <text class="f-navy" x="180" y="130" font-size="15" font-weight="700">Dependency inversion</text>
+          <text class="f-ink" x="180" y="150">Health depends on a port</text>
+          <text class="f-ink" x="180" y="168">it owns, not on the library</text>
+          <text class="f-navy" x="180" y="242" font-size="15" font-weight="700">Integration tests</text>
+          <text class="f-ink" x="180" y="262">check the adapter wiring</text>
+        </g>
+        <text class="f-navy" x="630" y="130" font-size="15" font-weight="700">Single resp.</text>
+        <text class="f-ink" x="630" y="150">Policy evaluates;</text>
+        <text class="f-ink" x="630" y="168">the service enforces</text>
+        <text class="f-navy" x="630" y="332" font-size="15" font-weight="700">Unit tests</text>
+        <text class="f-ink" x="630" y="352">run without Spring or DB</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section class="slide l-intro">
+  <div class="blk blue" style="left:706px;top:0;height:270px"></div>
+  <div class="blk navy" style="left:834px;top:270px;height:270px"></div>
+  <div class="txt">
+    <div class="t">What we learned</div>
+    <p>The PostgreSQL suite caught what policy unit tests could not: JDBC could not bind a Java Instant to a timestamp. Converting at the JDBC boundary fixed it without touching the domain. Dependency inversion keeps policy rules testable without Spring or PostgreSQL; the integrated slice checks the wiring.</p>
+  </div>
+</section>
+
+<!-- ===== Part 4: Mobile capture ===== -->
+<section class="slide l-section alt">
+  <div class="blk gray" style="left:553px;top:102px;height:168px"></div>
+  <div class="blk blue" style="left:681px;top:270px;height:270px"></div>
+  <div class="sec">
+    <div class="sec-num">04</div>
+    <div class="sec-title">Mobile capture</div>
+    <p class="sec-sub">Recording vaccinations at the barn, even offline</p>
+  </div>
+</section>
+
+<section class="slide l-process">
+  <h2 class="title">Barn capture in four steps</h2>
+  <div class="chev"><div>Prepare</div><div>Scan &amp; confirm</div><div>Record</div><div>Sync</div></div>
+  <div class="notes" style="grid-template-columns:repeat(4,1fr)">
+    <ul class="ul"><li>Keycloak sign-in (PKCE)</li><li>Cache in-scope cattle for 12 h</li></ul>
+    <ul class="ul"><li>RFID read, no direction</li><li>User confirms the animal</li></ul>
+    <ul class="ul"><li>Draft in local SQLite</li><li>Confirm freezes the body</li></ul>
+    <ul class="ul"><li>Every 20 s or on demand</li><li>Same intentId on retry</li></ul>
+  </div>
+  <div class="edge-r"></div>
+</section>
+
+<section class="slide l-diagram">
+  <h2 class="title center">Saved on device is not accepted</h2>
+  <div class="stage">
+    <svg width="810" height="370" viewBox="0 0 810 370">
+      <defs><marker id="mk19" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="f-navy"/></marker></defs>
+      <rect class="f-gray" x="0" y="0" width="390" height="250"/>
+      <text class="f-navy" x="15" y="28" font-size="15" font-weight="700">On the phone (SQLite)</text>
+      <rect class="f-white s-navy" stroke-width="2" x="20" y="55" width="120" height="56"/>
+      <text class="f-navy" x="80" y="80" font-size="16" font-weight="700" text-anchor="middle">DRAFT</text>
+      <text class="f-ink" x="80" y="100" font-size="13" text-anchor="middle">editable</text>
+      <rect class="f-blue" x="222" y="55" width="150" height="56"/>
+      <text class="f-white" x="297" y="80" font-size="15" font-weight="700" text-anchor="middle">PENDING_SYNC</text>
+      <text class="f-white" x="297" y="100" font-size="13" text-anchor="middle">body frozen</text>
+      <text class="f-ink" x="181" y="75" font-size="12" text-anchor="middle">confirm</text>
+      <g class="f-ink" font-size="15"><text x="20" y="152">Screen says “Saved on this device”,</text><text x="20" y="174">never “Accepted”</text></g>
+      <text class="f-ink" x="20" y="222" font-size="13">Sync on start, every 20 s, and on demand</text>
+      <rect class="f-gray" x="480" y="0" width="330" height="250"/>
+      <text class="f-navy" x="495" y="28" font-size="15" font-weight="700">Health service</text>
+      <rect class="f-navy" x="495" y="45" width="300" height="50"/>
+      <g class="f-white s-navy" stroke-width="2"><rect x="495" y="110" width="300" height="50"/><rect x="495" y="175" width="300" height="50"/></g>
+      <g text-anchor="middle">
+        <text class="f-white" x="645" y="66" font-size="15" font-weight="700">ACCEPTED</text>
+        <text class="f-white" x="645" y="86" font-size="13">201, or 200 on replay</text>
+        <text class="f-navy" x="645" y="131" font-size="15" font-weight="700">NEEDS_REVIEW</text>
+        <text class="f-ink" x="645" y="151" font-size="13">resource version changed</text>
+        <text class="f-navy" x="645" y="196" font-size="15" font-weight="700">REJECTED</text>
+        <text class="f-ink" x="645" y="216" font-size="13">e.g. ACCESS_DENIED</text>
+        <text class="f-ink" x="431" y="74" font-size="12">POST</text>
+        <text class="f-ink" x="435" y="102" font-size="12">same intentId</text>
+      </g>
+      <g class="s-navy" stroke-width="2" marker-end="url(#mk19)"><line x1="140" y1="83" x2="220" y2="83"/><line x1="372" y1="83" x2="478" y2="83"/></g>
+      <rect class="f-navy" x="0" y="272" width="810" height="98"/>
+      <g class="f-white">
+        <text x="20" y="302" font-size="17" font-weight="700">Lost response?</text>
+        <text x="20" y="328" font-size="14">Read the receipt first (GET /health-intents/{id}); resubmit the same body only on 404.</text>
+        <text x="20" y="352" font-size="14">HTTP 401 keeps every intent pending until the user signs in again.</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section class="slide l-text">
+  <h2 class="title">Verified so far, and open points</h2>
+  <div class="body">
+    <p><b>Verified</b></p>
+    <ul class="ul">
+      <li>In-scope API filtered correctly for the demo supervisor</li>
+      <li>Missing token gets 401; local stack healthy</li>
+    </ul>
+    <p><b>Open</b></p>
+    <ul class="ul">
+      <li>24 mobile tests written; results not recorded</li>
+      <li>QAS09 offline fixture not run yet</li>
+      <li>RFID reader simulated; Bluetooth adapter not built</li>
+      <li>Grants come from a JSON fixture, not real IAM</li>
+    </ul>
+  </div>
+  <div class="blk navy" style="left:832px;top:270px;height:270px"></div>
+</section>
+
+<section class="slide l-statement">
+  <div class="blk blue" style="left:706px;top:0;height:270px"></div>
+  <div class="blk navy" style="left:834px;top:270px;height:141px"></div>
+  <div class="big">Live demo</div>
+</section>
+
+<!-- ===== Part 5: Health access & conclusion ===== -->
+<section class="slide l-section">
+  <div class="blk gray" style="left:151px;top:270px;height:167px"></div>
+  <div class="blk blue" style="left:279px;top:0;height:270px"></div>
+  <div class="sec">
+    <div class="sec-num">05</div>
+    <div class="sec-title">Health access</div>
+    <p class="sec-sub">Who may record, read and verify clinical data</p>
+  </div>
+</section>
+
+<section class="slide l-diagram">
+  <h2 class="title center">Scope after a cattle transfer</h2>
+  <div class="stage">
+    <svg width="810" height="360" viewBox="0 0 810 360">
+      <defs><marker id="mk23" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="f-navy"/></marker></defs>
+      <rect class="f-gray" x="0" y="0" width="330" height="150"/>
+      <text class="f-navy" x="15" y="28" font-size="16" font-weight="700">Farm A</text>
+      <rect class="f-navy" x="20" y="45" width="290" height="40"/>
+      <text class="f-white" x="165" y="70" font-size="15" font-weight="700" text-anchor="middle">Farm Manager (grant at A)</text>
+      <rect class="f-white s-navy" stroke-width="2" x="20" y="95" width="290" height="40"/>
+      <text class="f-navy" x="165" y="120" font-size="15" font-weight="700" text-anchor="middle">Health record, origin A</text>
+      <rect class="f-gray" x="480" y="0" width="330" height="150"/>
+      <text class="f-navy" x="495" y="28" font-size="16" font-weight="700">Farm B</text>
+      <rect class="f-blue" x="500" y="70" width="290" height="45"/>
+      <text class="f-white" x="645" y="98" font-size="15" font-weight="700" text-anchor="middle">Animal, current custody</text>
+      <line class="s-navy" stroke-width="2" x1="330" y1="92" x2="478" y2="92" marker-end="url(#mk23)"/>
+      <text class="f-ink" x="404" y="82" font-size="13" text-anchor="middle">approved transfer</text>
+      <g class="f-gray"><rect x="0" y="175" width="810" height="52"/><rect x="0" y="238" width="810" height="52"/><rect x="0" y="301" width="810" height="52"/></g>
+      <circle class="f-navy" cx="30" cy="201" r="10"/>
+      <g class="f-white s-navy" stroke-width="2"><circle cx="30" cy="264" r="9"/><circle cx="30" cy="327" r="9"/></g>
+      <g class="f-navy" font-size="16" font-weight="700">
+        <text x="55" y="207">Read the origin-A record (READ_HISTORY)</text>
+        <text x="55" y="270">Look up the animal at B (VIEW_CATTLE)</text>
+        <text x="55" y="333">Submit a new record at B (SUBMIT_HEALTH)</text>
+      </g>
+      <g class="f-ink" font-size="16" text-anchor="end">
+        <text x="790" y="207">Allowed</text><text x="790" y="270">404, same as unknown</text><text x="790" y="333">Denied</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section class="slide l-chart">
+  <h2 class="title">Health + policy: 88/88 passed</h2>
+  <div class="left">
+    <svg width="390" height="220" viewBox="0 0 390 220">
+      <line class="s-gray" stroke-width="2" x1="0" y1="185" x2="390" y2="185"/>
+      <g class="f-blue"><rect x="25" y="42.5" width="70" height="142.5"/><rect x="160" y="181.25" width="70" height="3.75"/><rect x="295" y="166.25" width="70" height="18.75"/></g>
+      <g class="f-navy" font-size="16" font-weight="700" text-anchor="middle"><text x="60" y="34">76</text><text x="195" y="173">2</text><text x="330" y="158">10</text></g>
+      <g class="f-ink" font-size="13" text-anchor="middle"><text x="60" y="206">Policy unit</text><text x="195" y="206">Grant fixture</text><text x="330" y="206">Health + PG</text></g>
+    </svg>
+    <p class="sm" style="margin-top:10px">Staging commit fee7a8d, 21 Nov 2026. Java 21, PostgreSQL 17.7 via Testcontainers.</p>
+  </div>
+  <div class="right">
+    <svg width="390" height="170" viewBox="0 0 390 170">
+      <g class="f-blue" font-size="48" font-weight="700"><text x="20" y="60">82</text><text x="20" y="145">10</text></g>
+      <g class="f-ink" font-size="15">
+        <text x="110" y="40">snapshot-checker controls</text><text x="110" y="60">passed on synthetic data</text>
+        <text x="110" y="125">targeted QA probes</text><text x="110" y="145">rerun independently</text>
+      </g>
+    </svg>
+    <div class="kpi" style="width:300px;margin:14px 0 0 20px"><span class="v">0 failures · 0 errors</span><span class="l">0 skipped (Health + policy)</span></div>
+  </div>
+  <div class="edge-r"></div>
+</section>
+
+<section class="slide l-table">
+  <h2 class="title">What the backend actually did</h2>
+  <div class="tblwrap">
+    <table class="tbl filled">
+      <thead><tr><th style="width:230px">Case</th><th style="text-align:left">Observed result</th></tr></thead>
+      <tbody>
+        <tr><td><b>T06 Retry</b></td><td style="text-align:left">Retries and concurrent submits gave one effect; a stale version went to review</td></tr>
+        <tr><td><b>T07 Access</b></td><td style="text-align:left">Wrong barn denied; unauthorized receipt got 404; origin FM still reads history</td></tr>
+        <tr><td><b>T08 Evidence</b></td><td style="text-align:left">A failed evidence insert rolled back intent, record, receipt and outbox</td></tr>
+        <tr><td><b>T09 RFID</b></td><td style="text-align:left">Unknown RFID returned no cattle and created none</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="edge-r"></div>
+</section>
+
+<section class="slide l-text">
+  <h2 class="title">Conclusion and next steps</h2>
+  <div class="body">
+    <ul class="ul gap">
+      <li>Service-based centre with an edge core at each farm</li>
+      <li>Design: gate reads commit locally within 2 s, then relay</li>
+      <li>Health slice tested scope checks and in-transaction audit</li>
+      <li>Mobile drafts count only after Health accepts them</li>
+      <li>Next: real IAM grants, Bluetooth reader, end-to-end runs</li>
+    </ul>
+  </div>
+  <div class="blk navy" style="left:832px;top:270px;height:270px"></div>
+</section>
+
+<section class="slide l-thanks">
+  <div class="big">Thank you</div>
+  <div class="info">
+    <p>Questions and feedback are welcome.</p>
+    <p class="sm" style="margin-top:14px">github.com/donga2606/vinabeef-m2<br>github.com/jaysonphan/vinabeef-mobile</p>
+    <div class="icons">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+      <svg class="icon" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+    </div>
+  </div>
+  <div class="blk blue" style="left:704px;top:270px;height:270px"></div>
+  <div class="blk navy" style="left:832px;top:0;height:270px"></div>
+</section>
+
+<!-- ================= SLIDES END ================= -->
+</main>
+<div class="hud" id="hud"></div>
+<script>
+/* Deck runtime: fit-to-window, ← → / Space / PgUp PgDn / Home End, F = fullscreen, O = overview, #n deep link, P = print */
+(function(){
+  const deck=document.querySelector('.deck'), slides=[...deck.querySelectorAll('.slide')], hud=document.getElementById('hud');
+  let i=0; try{i=Math.min(Math.max((parseInt(location.hash.slice(1))||1)-1,0),slides.length-1)}catch(e){}
+  function fit(){ if(document.body.classList.contains('overview'))return;
+    const s=Math.min(innerWidth/960,innerHeight/540); deck.style.transform=`translate(${(innerWidth-960*s)/2}px,${(innerHeight-540*s)/2}px) scale(${s})`; }
+  function show(n){ i=Math.min(Math.max(n,0),slides.length-1); slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    hud.textContent=(i+1)+' / '+slides.length; try{history.replaceState(null,'','#'+(i+1))}catch(e){} }
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='f'||e.key==='F'){try{const r=document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();r&&r.catch&&r.catch(()=>{})}catch(e){}}
+    else if(e.key==='o'||e.key==='O'){document.body.classList.toggle('overview');fit();slides[i].scrollIntoView({block:'center'})}
+    else if(e.key==='p'||e.key==='P'){print()}
+  });
+  slides.forEach((s,k)=>s.addEventListener('click',()=>{ if(document.body.classList.contains('overview')){document.body.classList.remove('overview');show(k);fit()} }));
+  addEventListener('resize',fit); fit(); show(i);
+})();
+</script>
+</body>
+</html>
