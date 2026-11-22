@@ -332,6 +332,7 @@ b,strong{font-weight:700;color:var(--navy)}
 /* ===================== DECK-SPECIFIC (keep tiny, tokens only) ===================== */
 .l-toc .toc.rows-3{left:50px}
 .l-toc .toc.rows-3 .toc-item:last-child:nth-child(odd){grid-column:1 / -1;justify-self:center;width:417px}
+.l-diagram .view{position:absolute;left:var(--mx);top:100px;width:810px;text-align:center;font-size:var(--fs-sm);font-weight:700;color:var(--blue)}
 
 
 /* ===================== Presentation shell (not part of the look) ===================== */
@@ -426,7 +427,7 @@ body.overview .slide.active{outline:10px solid var(--blue)}
     <div>
       <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg>
       <div class="h3">Barns lose network</div>
-      <p>Readers keep reading while the WAN drops. Every passage must still be recorded, within 2 seconds.</p>
+      <p>Readers keep reading while the WAN drops. Every gate read must still be recorded: ≤2 s per gate read under peak workload.</p>
       <p class="sm blue" style="margin-top:10px"><b>Answered in Part 2</b></p>
     </div>
     <div>
@@ -447,7 +448,7 @@ body.overview .slide.active{outline:10px solid var(--blue)}
     </div>
     <div>
       <svg class="icon" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
-      <div class="h3">Performance</div><p>Every gate read completes within 2 seconds at peak</p>
+      <div class="h3">Performance</div><p>≤2 s per gate read under peak workload</p>
     </div>
     <div>
       <svg class="icon" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
@@ -503,6 +504,7 @@ body.overview .slide.active{outline:10px solid var(--blue)}
 
 <section class="slide l-diagram">
   <h2 class="title center">Edge at each farm, four services</h2>
+  <p class="view">Component-and-connector view · Target architecture</p>
   <div class="stage">
     <svg width="810" height="370" viewBox="0 0 810 370">
       <defs><marker id="mk9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="f-navy"/></marker></defs>
@@ -515,13 +517,14 @@ body.overview .slide.active{outline:10px solid var(--blue)}
       <text class="f-white" x="105" y="173" font-size="14" text-anchor="middle">Spring Boot</text>
       <rect class="f-white s-navy" stroke-width="2" x="15" y="221" width="180" height="62"/>
       <text class="f-navy" x="105" y="247" font-size="15" font-weight="700" text-anchor="middle">Edge PostgreSQL</text>
-      <text class="f-ink" x="105" y="269" font-size="13" text-anchor="middle">facts, evidence, outbox</text>
-      <text class="f-navy" x="105" y="325" font-size="15" font-weight="700" text-anchor="middle">Gate path ends here</text>
-      <text class="f-ink" x="105" y="346" font-size="13" text-anchor="middle">2 s target, no WAN on it</text>
-      <g class="f-ink" font-size="13"><text x="113" y="112">LLRP</text><text x="113" y="208">commit</text><text x="214" y="146" text-anchor="start">AMQP</text></g>
+      <text class="f-ink" x="105" y="269" font-size="14" text-anchor="middle">facts, evidence, outbox</text>
+      <text class="f-navy" x="105" y="316" font-size="15" font-weight="700" text-anchor="middle">Gate path, no WAN</text>
+      <text class="f-ink" x="105" y="338" font-size="14" text-anchor="middle">≤2 s per gate read</text>
+      <text class="f-ink" x="105" y="357" font-size="14" text-anchor="middle">under peak workload</text>
+      <g class="f-ink" font-size="14"><text x="113" y="112">LLRP</text><text x="113" y="208">commit</text><text x="214" y="146" text-anchor="start">AMQP</text></g>
       <rect class="f-navy" x="264" y="125" width="126" height="62"/>
       <text class="f-white" x="327" y="151" font-size="16" font-weight="700" text-anchor="middle">RabbitMQ</text>
-      <text class="f-white" x="327" y="173" font-size="13" text-anchor="middle">quorum queues</text>
+      <text class="f-white" x="327" y="173" font-size="14" text-anchor="middle">quorum queues</text>
       <rect class="f-gray" x="430" y="0" width="380" height="40"/>
       <text class="f-navy" x="620" y="25" font-size="15" font-weight="700" text-anchor="middle">Web and mobile clients</text>
       <rect class="f-navy" x="430" y="62" width="380" height="44"/>
@@ -535,11 +538,11 @@ body.overview .slide.active{outline:10px solid var(--blue)}
       </g>
       <rect class="f-white s-navy" stroke-width="2" x="430" y="280" width="185" height="50"/>
       <text class="f-navy" x="522" y="301" font-size="15" font-weight="700" text-anchor="middle">Central PostgreSQL</text>
-      <text class="f-ink" x="522" y="320" font-size="13" text-anchor="middle">one schema per service</text>
+      <text class="f-ink" x="522" y="320" font-size="14" text-anchor="middle">one schema per service</text>
       <rect class="f-white s-blue" stroke-width="2" x="625" y="280" width="185" height="50"/>
       <text class="f-navy" x="717" y="301" font-size="15" font-weight="700" text-anchor="middle">National API</text>
-      <text class="f-ink" x="717" y="320" font-size="13" text-anchor="middle">contract-qualified HTTPS</text>
-      <text class="f-ink" x="620" y="358" font-size="13" text-anchor="middle">Each service re-checks scope on its own resources</text>
+      <text class="f-ink" x="717" y="320" font-size="14" text-anchor="middle">contract-qualified HTTPS</text>
+      <text class="f-ink" x="620" y="358" font-size="14" text-anchor="middle">Each service re-checks scope on its own resources</text>
       <g class="s-navy" stroke-width="2" marker-end="url(#mk9)">
         <line x1="105" y1="91" x2="105" y2="123"/><line x1="105" y1="187" x2="105" y2="219"/>
         <line x1="195" y1="156" x2="262" y2="156"/><line x1="390" y1="154" x2="428" y2="154"/>
@@ -556,7 +559,7 @@ body.overview .slide.active{outline:10px solid var(--blue)}
   <div class="notes" style="grid-template-columns:repeat(4,1fr)">
     <ul class="ul"><li>LLRP on LAN</li><li>Tag ID and time</li></ul>
     <ul class="ul"><li>Collapse repeat reads</li><li>Set IN or OUT</li></ul>
-    <ul class="ul"><li>Fact, count, evidence, outbox</li><li>One transaction, then ACK</li><li>2 s design target</li></ul>
+    <ul class="ul"><li>Fact, count, evidence, outbox</li><li>One transaction, then ACK</li><li>≤2 s per gate read under peak workload</li></ul>
     <ul class="ul"><li>At least once to central</li><li>Idempotent by event ID</li></ul>
   </div>
   <div class="edge-r"></div>
@@ -564,51 +567,53 @@ body.overview .slide.active{outline:10px solid var(--blue)}
 
 <section class="slide l-diagram">
   <h2 class="title center">Deployment and WAN outage</h2>
+  <p class="view">Allocation view · Target architecture</p>
   <div class="stage">
     <svg width="810" height="370" viewBox="0 0 810 370">
       <defs><marker id="mk11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="f-navy"/></marker></defs>
-      <rect class="f-gray" x="0" y="0" width="340" height="250"/>
-      <text class="f-navy" x="15" y="28" font-size="16" font-weight="700">Farm site ×3</text>
-      <g class="f-white s-navy" stroke-width="2"><rect x="15" y="105" width="310" height="80"/><rect x="15" y="203" width="310" height="36"/></g>
-      <rect class="f-white s-blue" stroke-width="2" x="15" y="45" width="310" height="40"/>
+      <rect class="f-gray" x="0" y="0" width="340" height="220"/>
+      <text class="f-navy" x="15" y="27" font-size="16" font-weight="700">Farm site ×3</text>
+      <g class="f-white s-navy" stroke-width="2"><rect x="15" y="90" width="310" height="68"/><rect x="15" y="174" width="310" height="34"/></g>
+      <rect class="f-white s-blue" stroke-width="2" x="15" y="40" width="310" height="34"/>
       <g text-anchor="middle">
-        <text class="f-navy" x="170" y="70" font-size="15" font-weight="700">RFID gate reader</text>
-        <text class="f-navy" x="170" y="133" font-size="15" font-weight="700">Edge server (Docker)</text>
-        <text class="f-ink" x="170" y="155" font-size="14">Edge Core + PostgreSQL</text>
-        <text class="f-ink" x="170" y="175" font-size="13">SSD + UPS</text>
-        <text class="f-navy" x="170" y="226" font-size="14" font-weight="700">Farm VPN router</text>
+        <text class="f-navy" x="170" y="62" font-size="15" font-weight="700">RFID gate reader</text>
+        <text class="f-navy" x="170" y="112" font-size="15" font-weight="700">Edge server (Docker)</text>
+        <text class="f-ink" x="170" y="131" font-size="14">Edge Core + PostgreSQL</text>
+        <text class="f-ink" x="170" y="149" font-size="14">SSD + UPS</text>
+        <text class="f-navy" x="170" y="196" font-size="14" font-weight="700">Farm VPN router</text>
       </g>
-      <rect class="f-gray" x="470" y="0" width="340" height="250"/>
-      <text class="f-navy" x="485" y="28" font-size="16" font-weight="700">Central site</text>
-      <rect class="f-navy" x="485" y="45" width="310" height="40"/>
-      <rect class="f-blue" x="485" y="93" width="310" height="40"/>
-      <g class="f-white s-navy" stroke-width="2"><rect x="485" y="141" width="150" height="54"/><rect x="645" y="141" width="150" height="54"/><rect x="485" y="203" width="310" height="36"/></g>
+      <rect class="f-gray" x="470" y="0" width="340" height="220"/>
+      <text class="f-navy" x="485" y="27" font-size="16" font-weight="700">Central site</text>
+      <rect class="f-navy" x="485" y="40" width="310" height="34"/>
+      <rect class="f-blue" x="485" y="80" width="310" height="34"/>
+      <g class="f-white s-navy" stroke-width="2"><rect x="485" y="120" width="150" height="48"/><rect x="645" y="120" width="150" height="48"/><rect x="485" y="174" width="310" height="34"/></g>
       <g text-anchor="middle">
-        <text class="f-white" x="640" y="70" font-size="15" font-weight="700">API Gateway (DMZ)</text>
-        <text class="f-white" x="640" y="118" font-size="15" font-weight="700">Four Spring Boot services</text>
-        <text class="f-navy" x="560" y="164" font-size="14" font-weight="700">RabbitMQ</text>
-        <text class="f-ink" x="560" y="183" font-size="13">3 quorum nodes</text>
-        <text class="f-navy" x="720" y="164" font-size="14" font-weight="700">PostgreSQL</text>
-        <text class="f-ink" x="720" y="183" font-size="13">+ sync standby</text>
-        <text class="f-navy" x="640" y="226" font-size="14" font-weight="700">Central VPN gateway</text>
-        <text class="f-ink" x="405" y="208" font-size="13">IPsec VPN</text>
-        <text class="f-blue" x="405" y="247" font-size="13" font-weight="700">WAN may drop</text>
+        <text class="f-white" x="640" y="62" font-size="15" font-weight="700">API Gateway (DMZ)</text>
+        <text class="f-white" x="640" y="102" font-size="15" font-weight="700">Four Spring Boot services</text>
+        <text class="f-navy" x="560" y="140" font-size="14" font-weight="700">RabbitMQ</text>
+        <text class="f-ink" x="560" y="159" font-size="14">3 quorum nodes</text>
+        <text class="f-navy" x="720" y="140" font-size="14" font-weight="700">PostgreSQL</text>
+        <text class="f-ink" x="720" y="159" font-size="14">+ sync standby</text>
+        <text class="f-navy" x="640" y="196" font-size="14" font-weight="700">Central VPN gateway</text>
+        <text class="f-ink" x="405" y="176" font-size="14">IPsec VPN</text>
+        <text class="f-blue" x="405" y="217" font-size="14" font-weight="700">WAN may drop</text>
       </g>
-      <g class="s-navy" stroke-width="2" marker-end="url(#mk11)"><line x1="170" y1="85" x2="170" y2="103"/><line x1="170" y1="185" x2="170" y2="201"/></g>
-      <line class="s-navy" stroke-width="2" stroke-dasharray="6 5" x1="325" y1="221" x2="483" y2="221" marker-end="url(#mk11)"/>
-      <g class="s-blue" stroke-width="3"><line x1="395" y1="211" x2="415" y2="231"/><line x1="415" y1="211" x2="395" y2="231"/></g>
-      <rect class="f-navy" x="0" y="272" width="340" height="98"/>
-      <rect class="f-blue" x="470" y="272" width="340" height="98"/>
-      <line class="s-navy" stroke-width="2" x1="352" y1="321" x2="456" y2="321" marker-end="url(#mk11)"/>
+      <g class="s-navy" stroke-width="2" marker-end="url(#mk11)"><line x1="170" y1="74" x2="170" y2="88"/><line x1="170" y1="158" x2="170" y2="172"/></g>
+      <line class="s-navy" stroke-width="2" stroke-dasharray="6 5" x1="325" y1="191" x2="483" y2="191" marker-end="url(#mk11)"/>
+      <g class="s-blue" stroke-width="3"><line x1="395" y1="181" x2="415" y2="201"/><line x1="415" y1="181" x2="395" y2="201"/></g>
+      <rect class="f-navy" x="0" y="236" width="340" height="134"/>
+      <rect class="f-blue" x="470" y="236" width="340" height="134"/>
+      <line class="s-navy" stroke-width="2" x1="352" y1="303" x2="456" y2="303" marker-end="url(#mk11)"/>
       <g class="f-white">
-        <text x="20" y="298" font-size="18" font-weight="700">WAN down</text>
-        <text x="20" y="320" font-size="14">Gate capture continues locally</text>
-        <text x="20" y="340" font-size="14">Leased local reads still work</text>
-        <text x="20" y="360" font-size="14">Clinical writes, new logins: online-only</text>
-        <text x="490" y="298" font-size="18" font-weight="700">WAN back</text>
-        <text x="490" y="320" font-size="14">Outbox replays the backlog</text>
-        <text x="490" y="340" font-size="14">Delivered at least once</text>
-        <text x="490" y="360" font-size="14">Target: cleared within 600 s</text>
+        <text x="20" y="263" font-size="18" font-weight="700">WAN down</text>
+        <text x="20" y="288" font-size="14">Gate capture continues locally</text>
+        <text x="20" y="309" font-size="14" font-weight="700">≤2 s per gate read under peak workload</text>
+        <text x="20" y="330" font-size="14">Leased local reads still work</text>
+        <text x="20" y="351" font-size="14">Clinical writes, new logins: online-only</text>
+        <text x="490" y="263" font-size="18" font-weight="700">WAN back</text>
+        <text x="490" y="288" font-size="14">Outbox replays the backlog</text>
+        <text x="490" y="309" font-size="14">Delivered at least once</text>
+        <text x="490" y="330" font-size="14">Target: cleared within 600 s</text>
       </g>
     </svg>
   </div>
@@ -658,6 +663,7 @@ body.overview .slide.active{outline:10px solid var(--blue)}
 
 <section class="slide l-diagram">
   <h2 class="title center">Dependency inversion in Health</h2>
+  <p class="view">Module view — Health authorization</p>
   <div class="stage">
     <svg width="810" height="370" viewBox="0 0 810 370">
       <defs>
@@ -666,33 +672,36 @@ body.overview .slide.active{outline:10px solid var(--blue)}
       </defs>
       <rect class="f-navy" x="230" y="10" width="350" height="66"/>
       <text class="f-white" x="405" y="38" font-size="16" font-weight="700" text-anchor="middle">Health application service</text>
-      <text class="f-white" x="405" y="60" font-size="13" text-anchor="middle">enforces the decision, audit, retry</text>
+      <text class="f-white" x="405" y="60" font-size="14" text-anchor="middle">enforces the decision, audit, retry</text>
       <rect class="f-blue" x="230" y="116" width="350" height="50"/>
       <text class="f-white" x="405" y="146" font-size="16" font-weight="700" text-anchor="middle">AccessPolicyPort (interface)</text>
       <rect class="f-white s-blue" stroke-width="2" x="200" y="222" width="410" height="50"/>
       <text class="f-navy" x="405" y="252" font-size="15" font-weight="700" text-anchor="middle">ClinicalAuthorizationPolicyAdapter</text>
       <rect class="f-gray" x="200" y="310" width="410" height="54"/>
       <text class="f-navy" x="405" y="333" font-size="15" font-weight="700" text-anchor="middle">access-policy library</text>
-      <text class="f-ink" x="405" y="353" font-size="13" text-anchor="middle">pure Java, no Spring, no database</text>
+      <text class="f-ink" x="405" y="353" font-size="14" text-anchor="middle">pure Java, no Spring, no database</text>
       <g class="s-navy" stroke-width="2">
         <line x1="405" y1="76" x2="405" y2="114" marker-end="url(#mk15)"/>
         <line x1="405" y1="220" x2="405" y2="170" stroke-dasharray="6 4" marker-end="url(#mk15o)"/>
         <line x1="405" y1="272" x2="405" y2="308" marker-end="url(#mk15)"/>
       </g>
-      <g class="f-ink" font-size="13"><text x="415" y="100">calls</text><text x="415" y="200">implements</text><text x="415" y="294">maps to</text></g>
-      <g font-size="13">
+      <g class="f-ink" font-size="14"><text x="415" y="100">calls</text><text x="415" y="200">implements</text><text x="415" y="294">maps to</text></g>
+      <g font-size="14">
         <g text-anchor="end">
-          <text class="f-navy" x="180" y="130" font-size="15" font-weight="700">Dependency inversion</text>
-          <text class="f-ink" x="180" y="150">Health depends on a port</text>
-          <text class="f-ink" x="180" y="168">it owns, not on the library</text>
+          <text class="f-navy" x="180" y="124" font-size="15" font-weight="700">Dependency inversion</text>
+          <text class="f-ink" x="180" y="144">Health depends on</text>
+          <text class="f-ink" x="180" y="162">a port it owns,</text>
+          <text class="f-ink" x="180" y="180">not on the library</text>
           <text class="f-navy" x="180" y="242" font-size="15" font-weight="700">Integration tests</text>
-          <text class="f-ink" x="180" y="262">check the adapter wiring</text>
+          <text class="f-ink" x="180" y="262">check the</text>
+          <text class="f-ink" x="180" y="280">adapter wiring</text>
         </g>
         <text class="f-navy" x="630" y="130" font-size="15" font-weight="700">Single resp.</text>
         <text class="f-ink" x="630" y="150">Policy evaluates;</text>
         <text class="f-ink" x="630" y="168">the service enforces</text>
-        <text class="f-navy" x="630" y="332" font-size="15" font-weight="700">Unit tests</text>
-        <text class="f-ink" x="630" y="352">run without Spring or DB</text>
+        <text class="f-navy" x="630" y="322" font-size="15" font-weight="700">Unit tests</text>
+        <text class="f-ink" x="630" y="342">run without</text>
+        <text class="f-ink" x="630" y="360">Spring or DB</text>
       </g>
     </svg>
   </div>
@@ -884,7 +893,7 @@ body.overview .slide.active{outline:10px solid var(--blue)}
   <div class="body">
     <ul class="ul gap">
       <li>Service-based centre with an edge core at each farm</li>
-      <li>Design: gate reads commit locally within 2 s, then relay</li>
+      <li>Design: ≤2 s per gate read under peak workload, committed locally</li>
       <li>Health slice tested scope checks and in-transaction audit</li>
       <li>Mobile drafts count only after Health accepts them</li>
       <li>Next: real IAM grants, Bluetooth reader, end-to-end runs</li>
