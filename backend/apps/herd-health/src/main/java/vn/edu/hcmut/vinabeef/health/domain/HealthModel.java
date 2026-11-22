@@ -11,7 +11,7 @@ public final class HealthModel {
     public enum RecordType { VACCINATION, HEALTH_STATUS, TREATMENT }
     public enum IntentStatus { ACCEPTED, NEEDS_REVIEW, REJECTED }
     public enum RegistrationStatus { ACTIVE, INACTIVE }
-    public enum PolicyAction { VIEW_CATTLE, SUBMIT_HEALTH, READ_HISTORY, READ_RECEIPT }
+    public enum PolicyAction { VIEW_CATTLE, SUBMIT_HEALTH, READ_HISTORY, READ_RECEIPT, APPLY_CORRECTION }
     public enum PolicyRole { BS, FM, SA, EM }
     public enum GrantStatus { ACTIVE, REVOKED, DISABLED }
 

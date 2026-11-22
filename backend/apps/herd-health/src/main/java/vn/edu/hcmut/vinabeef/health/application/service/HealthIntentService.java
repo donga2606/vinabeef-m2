@@ -74,9 +74,8 @@ public class HealthIntentService implements LookupCattleUseCase, SubmitHealthInt
 
         HealthAuthorization.Session beforeClaim = authorization.openSession();
         CattleResource target = resolveTarget(submission);
-        authorization.requireAllowed(beforeClaim, PolicyAction.SUBMIT_HEALTH,
-                new CattleResourceContext(target.policyContext()));
         Optional<ClinicalRecord> correctionTarget = correctionTarget(submission, target);
+        requireWriteAllowed(beforeClaim, target, correctionTarget);
         validateScheduleReference(submission, target, correctionTarget.orElse(null));
 
         Instant now = clock.instant();
@@ -93,8 +92,7 @@ public class HealthIntentService implements LookupCattleUseCase, SubmitHealthInt
             throw HealthException.unauthenticated();
         }
         // Recheck current grants after the cattle row is locked, immediately before acceptance.
-        authorization.requireAllowed(finalSession, PolicyAction.SUBMIT_HEALTH,
-                new CattleResourceContext(locked.policyContext()));
+        requireWriteAllowed(finalSession, locked, correctionTarget);
 
         if (locked.registrationStatus() == RegistrationStatus.INACTIVE) {
             return persistConflict(submission, payloadHash, finalSession.principal().subjectId(), locked,
@@ -236,6 +234,22 @@ public class HealthIntentService implements LookupCattleUseCase, SubmitHealthInt
         return submission.cattleId() != null
                 ? repository.findCattleById(submission.cattleId()).orElseThrow(HealthException::forbidden)
                 : repository.findCattleByRfid(submission.rfid()).orElseThrow(HealthException::forbidden);
+    }
+
+    /**
+     * A new record needs SUBMIT_HEALTH on the animal's current custody. A correction instead needs
+     * APPLY_CORRECTION on the corrected record: only a Farm Manager of the record's origin farm
+     * (RBAC "Approve and apply health correction"). A Barn Supervisor cannot apply one.
+     */
+    private void requireWriteAllowed(HealthAuthorization.Session session, CattleResource cattle,
+                                     Optional<ClinicalRecord> correction) {
+        if (correction.isPresent()) {
+            authorization.requireAllowed(session, PolicyAction.APPLY_CORRECTION,
+                    new HistoryRecordContext(cattle.policyContext(), correction.get().policyRef()));
+        } else {
+            authorization.requireAllowed(session, PolicyAction.SUBMIT_HEALTH,
+                    new CattleResourceContext(cattle.policyContext()));
+        }
     }
 
     private Optional<ClinicalRecord> correctionTarget(HealthIntentSubmission submission, CattleResource cattle) {

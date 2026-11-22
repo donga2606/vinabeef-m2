@@ -263,8 +263,16 @@ class HealthIntentIntegrationTest {
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM schedule_completion WHERE schedule_id = ?", Integer.class, SCHEDULE_1));
 
         UUID originalRecord = jdbc.queryForObject("SELECT record_id FROM clinical_record WHERE intent_id = ?", UUID.class, firstIntent);
+        // RBAC: a Barn Supervisor cannot apply a health correction; nothing is stored.
+        authenticate("bs.demo");
+        perform(post("/api/v1/health-intents").contentType("application/json")
+                        .content(correctionRequest(UUID.randomUUID(), originalRecord, 1)))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+        assertEquals(1, count("clinical_record"));
+
+        // The Farm Manager of the record's origin farm applies it.
         String correction = correctionRequest(UUID.randomUUID(), originalRecord, 1);
-        authenticate();
+        authenticate("fm.origin");
         perform(post("/api/v1/health-intents").contentType("application/json").content(correction))
                 .andExpect(status().isCreated());
         assertEquals(2, count("clinical_record"));

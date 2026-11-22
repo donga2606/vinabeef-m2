@@ -7,15 +7,17 @@ import java.util.Set;
 
 /** Deterministic authorization over verified, current, server-owned context. */
 public final class ClinicalAuthorizationPolicy {
-    public enum Action { VIEW_CATTLE, SUBMIT_HEALTH, READ_HISTORY, READ_RECEIPT }
+    /** APPLY_CORRECTION appends a linked correction to an accepted record (RBAC: origin-farm FM only). */
+    public enum Action { VIEW_CATTLE, SUBMIT_HEALTH, READ_HISTORY, READ_RECEIPT, APPLY_CORRECTION }
     public enum Role { BS, FM, SA, EM }
     public enum GrantStatus { ACTIVE, REVOKED, DISABLED }
     public enum Reason {
-        CURRENT_BARN, CURRENT_FARM, OWN_ORIGIN_RECORD,
+        CURRENT_BARN, CURRENT_FARM, OWN_ORIGIN_RECORD, ORIGIN_FARM_CORRECTION,
         NO_MATCHING_GRANT, ACTION_CONTEXT_MISMATCH;
 
         private boolean permits() {
-            return this == CURRENT_BARN || this == CURRENT_FARM || this == OWN_ORIGIN_RECORD;
+            return this == CURRENT_BARN || this == CURRENT_FARM || this == OWN_ORIGIN_RECORD
+                    || this == ORIGIN_FARM_CORRECTION;
         }
     }
 
@@ -138,7 +140,8 @@ public final class ClinicalAuthorizationPolicy {
         Reason bestReason = null;
         for (Grant grant : subject.grants()) {
             if (!grant.effectiveAt(decisionTime)) { continue; }
-            Reason reason = match(grant, resource);
+            Reason reason = action == Action.APPLY_CORRECTION
+                    ? matchCorrection(grant, (HistoryRecord) resource) : match(grant, resource);
             if (reason != null && (best == null || grant.reference().compareTo(best.reference()) < 0)) {
                 best = grant;
                 bestReason = reason;
@@ -152,9 +155,18 @@ public final class ClinicalAuthorizationPolicy {
     private static boolean supports(Action action, ResourceContext resource) {
         return switch (action) {
             case VIEW_CATTLE, SUBMIT_HEALTH -> resource instanceof CattleResource;
-            case READ_HISTORY -> resource instanceof HistoryRecord;
+            case READ_HISTORY, APPLY_CORRECTION -> resource instanceof HistoryRecord;
             case READ_RECEIPT -> resource instanceof AcceptedReceipt || resource instanceof TargetReceipt;
         };
+    }
+
+    /**
+     * Only a Farm Manager of the record's origin farm may apply a correction. Current barn or
+     * current farm custody alone is not enough (a BS, or a destination-farm FM after transfer).
+     */
+    private static Reason matchCorrection(Grant grant, HistoryRecord target) {
+        return grant.role() == Role.FM && grant.farmId().equals(target.record().recordOriginFarmId())
+                ? Reason.ORIGIN_FARM_CORRECTION : null;
     }
 
     private static Reason match(Grant grant, ResourceContext resource) {

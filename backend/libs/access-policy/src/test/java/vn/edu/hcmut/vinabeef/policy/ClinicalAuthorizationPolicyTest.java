@@ -197,6 +197,26 @@ class ClinicalAuthorizationPolicyTest {
         assertFalse(policy.evaluate(action, subject(grant("tech", role, "FA", Set.of("BA"))), context, NOW).allowed());
     }
 
+    static Stream<Arguments> correctionCases() {
+        return Stream.of(
+                Arguments.of("C01 origin FM, animal still at origin", fm(), CA, OLD_RECORD, true),
+                Arguments.of("C02 origin FM after transfer", fm(), MOVED, OLD_RECORD, true),
+                Arguments.of("C03 BS in the current barn", bs(), CA, OLD_RECORD, false),
+                Arguments.of("C04 destination FM, record from another farm", grant("fm-b", Role.FM, "FB", Set.of()), MOVED, OLD_RECORD, false),
+                Arguments.of("C05 origin FM, record originated elsewhere", fm(), MOVED, NEW_RECORD, false),
+                Arguments.of("C06 SA", grant("sa", Role.SA, "FA", Set.of("BA")), CA, OLD_RECORD, false),
+                Arguments.of("C07 EM", grant("em", Role.EM, "FA", Set.of("BA")), CA, OLD_RECORD, false));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("correctionCases")
+    void onlyOriginFarmManagerMayApplyCorrection(String label, Grant grant, CattleContext cattle,
+                                                 ClinicalRecord record, boolean allowed) {
+        Decision decision = policy.evaluate(Action.APPLY_CORRECTION, subject(grant), new HistoryRecord(cattle, record), NOW);
+        assertEquals(allowed, decision.allowed());
+        assertEquals(allowed ? Reason.ORIGIN_FARM_CORRECTION : Reason.NO_MATCHING_GRANT, decision.reason());
+    }
+
     @Test void noGrantsOrReceiptIdentifierAloneDoesNotAuthorize() {
         assertEquals(new Decision(false, Reason.NO_MATCHING_GRANT, null),
                 policy.evaluate(Action.READ_RECEIPT, subject(), new TargetReceipt("known-id", CA), NOW));
@@ -208,7 +228,7 @@ class ClinicalAuthorizationPolicyTest {
             List<ResourceContext> incompatible = switch (action) {
                 case VIEW_CATTLE, SUBMIT_HEALTH -> List.of(new HistoryRecord(MOVED, OLD_RECORD),
                         new AcceptedReceipt("accepted", MOVED, OLD_RECORD), new TargetReceipt("pending", CA));
-                case READ_HISTORY -> List.of(new CattleResource(CA), new AcceptedReceipt("accepted", CA, OLD_RECORD), new TargetReceipt("pending", CA));
+                case READ_HISTORY, APPLY_CORRECTION -> List.of(new CattleResource(CA), new AcceptedReceipt("accepted", CA, OLD_RECORD), new TargetReceipt("pending", CA));
                 case READ_RECEIPT -> List.of(new CattleResource(CA), new HistoryRecord(MOVED, OLD_RECORD));
             };
             for (ResourceContext context : incompatible) {
