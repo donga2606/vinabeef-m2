@@ -211,8 +211,11 @@ unrestricted disaster zero-loss is not assumed.
 The offline subset includes gate capture, local movement/count,
 alert evaluation with sufficient cached context, and durable pending
 synchronization. Stale or unknown context is marked provisional.
-Clinical operations, transfers, configuration changes and new human
-login remain online-only. Existing local dashboard reads expire within 15 minutes of the last central policy validation, or earlier
+Server acceptance of clinical records, transfers, configuration changes
+and new human login remain online-only. In M2 the mobile prototype may
+save a clinical record offline as a local draft on the device; the
+Health service accepts or rejects it only after reconnection
+(\Cref{sec:m2-mobile}). Existing local dashboard reads expire within 15 minutes of the last central policy validation, or earlier
 session expiry; machine capture uses a separate provisioned identity and
 policy.
 
@@ -280,7 +283,10 @@ Cross-farm transfers require both source- and destination-scope
 approvals. New health writes require current custody, a stable intent
 and the expected version. Health correction approval belongs to the
 original record' s farm; ordinary corrections cannot
-change custody. FM approves business configuration before SA applies it.
+change custody. The prototype enforces the apply step: only a Farm
+Manager of the record's origin farm can apply a correction, and a Barn
+Supervisor receives HTTP 403 (\Cref{sec:m2-mobile-server}). A separate
+request-and-approve workflow is not implemented. FM approves business configuration before SA applies it.
 Role grants require independent FM/EM approval and prohibit
 self-escalation. SA has scoped technical/security audit access, without
 ordinary clinical read/write privilege. Report execution and download

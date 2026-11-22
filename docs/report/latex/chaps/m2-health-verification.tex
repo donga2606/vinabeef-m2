@@ -79,7 +79,7 @@ Health integration tests with PostgreSQL & 10 & 0 & 0 & 0 \\
 \textbf{Total} & \textbf{88} & \textbf{0} & \textbf{0} & \textbf{0} \\
 \bottomrule
 \end{tabularx}
-\caption{Maven Surefire results for the Health and policy modules.}
+\caption{Maven Surefire results for the Health and policy modules on \texttt{staging} commit \texttt{fee7a8d}, 21 November 2026. The submitted commit is re-verified in \Cref{sec:m2-mobile-verification}.}
 \label{tab:m2-health-tests}
 \end{table}
 
@@ -119,9 +119,10 @@ missing source evidence. Independent QA also reran ten targeted probes.
 Checker verification against a mobile run export is pending.
 
 The Health backend results cover the fixture identity and grants shown
-above. End-to-end tests with the real identity source, mobile selection
-through receipt and history, and collector recovery still need
-separate evidence. The mobile flow, its server additions and the
+above. The Live run in \Cref{sec:m2-mobile-verification} adds the
+real Keycloak identity and the mobile path from selection through
+receipt and history; grants still come from the fixture, and collector
+recovery still needs separate evidence. The mobile flow, its server additions and the
 checks done so far are in \Cref{sec:m2-mobile}, including T05 offline
 capture. The gate deadline and recovery targets retain their own
 verification criteria in \Cref{sec:3}.

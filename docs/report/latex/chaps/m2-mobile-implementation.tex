@@ -2,14 +2,15 @@
 
 \noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
 \textbf{Source code.}\\
-Backend (Health service, in-scope API, JWT resource server):
+Backend (Health service, in-scope API, JWT resource server, correction rule):
 \url{https://github.com/donga2606/vinabeef-m2}, commit
-\texttt{99b87af} on \texttt{main}, 22 November 2026.\cite{m2BackendMobile}\\
+\texttt{a987d78} on \texttt{main}, 22 November 2026.\cite{m2BackendMobile}\\
 Mobile client (Flutter):
 \url{https://github.com/jaysonphan/vinabeef-mobile}, commit
 \texttt{5d60fc7} on \texttt{main}, 22 November 2026.\cite{m2MobileRepo}\\
-The Health backend verified in \Cref{sec:m2-health} is the earlier
-\texttt{staging} commit \texttt{fee7a8d}.\cite{m2HealthStaging}}}
+\Cref{tab:m2-health-tests} in \Cref{sec:m2-health} is an earlier, separate
+run on \texttt{staging} commit \texttt{fee7a8d}.\cite{m2HealthStaging}
+The submitted commit was re-verified in \Cref{sec:m2-mobile-verification}.}}
 
 \medskip
 This section covers the second M2 issue: a barn supervisor (BS) or farm
@@ -116,6 +117,15 @@ principal from \texttt{preferred\_username}, permits only
 \texttt{problem+json} 401 for missing or invalid tokens. Current grants
 still come from the grant adapter, which is a JSON fixture in this
 prototype.
+\item Correction authorization: the RBAC matrix (\Cref{sec:2.2.3}) lets
+only a Farm Manager of the record's origin farm apply a health
+correction. The policy library has a separate action
+\texttt{APPLY\_CORRECTION}, evaluated on the corrected record.
+\texttt{HealthIntentService} checks it instead of
+\texttt{SUBMIT\_HEALTH} when a request carries
+\texttt{correctionOfRecordId}, both before claiming the intent and after
+locking the cattle row. A Barn Supervisor now receives 403. A separate
+request-and-approve workflow is not implemented.
 \end{itemize}
 
 \subsection{Verification}\label{sec:m2-mobile-verification}
@@ -125,13 +135,21 @@ prototype.
 \hline
 \textbf{Item} & \textbf{Status} & \textbf{Evidence} \\ \hline
 \endhead
-Backend build, all modules & Passed & \texttt{./dev mvn -B verify}, 22
-Nov 2026: BUILD SUCCESS (access-policy 76, farm-edge 10, movement 3,
-reader-emulator 14). Herd-health ran 20 tests; its 13 Testcontainers
-tests are skipped in the toolbox (no Docker socket) and are covered by
-\Cref{tab:m2-health-tests}. \\ \hline
-\texttt{CattleScopeService} unit tests & Passed & 5 tests in the run
-above. \\ \hline
+Health and policy modules at \texttt{a987d78} & Passed & 22 Nov 2026,
+macOS host, JDK 21.0.7, Docker Desktop, PostgreSQL 17.7 via
+Testcontainers: \texttt{./mvnw -B -pl apps/herd-health -am verify}.
+Access-policy 83/83 (including 7 correction cases);
+\texttt{CattleScopeServiceTest} 5/5; grant fixture 2/2;
+\texttt{HealthIntentIntegrationTest} 13/13 on PostgreSQL. Total
+103/103, none skipped. \\ \hline
+Correction authorization & Passed & In the integration suite above, a
+correction by \texttt{bs.demo} returns 403 \texttt{ACCESS\_DENIED}
+and stores nothing; the origin-farm FM (\texttt{fm.origin}) gets 201
+and the new record links to the original. \\ \hline
+Other backend modules & Passed & \texttt{./dev mvn -B verify}, 22 Nov
+2026, toolbox container: farm-edge 10, movement 3, reader-emulator 14.
+In that run the Testcontainers tests were skipped (no Docker socket);
+the row above is the run of record for Health. \\ \hline
 Local stack (Compose, profile \texttt{local}) & Passed & All containers
 healthy; \texttt{/actuator/health} returns UP. \\ \hline
 Token required & Passed & \texttt{in-scope} without a token returns 401
@@ -140,13 +158,40 @@ Scope with real Keycloak token & Passed & Token for \texttt{bs.demo}
 (BS, BARN-DL-01) returns exactly one animal, RFID-DL-1001, with the
 open FMD-BOOSTER schedule; animals in BARN-DL-02 and FARM-GL are not
 returned. \\ \hline
-App on iOS simulator & Run & Demo mode screens exercised manually. \\ \hline
-Mobile automated tests (24) & Not recorded & \texttt{flutter test};
-the list is below. Results are not recorded in this report. \\ \hline
+Live end-to-end (app $\rightarrow$ Keycloak $\rightarrow$ Health API
+$\rightarrow$ PostgreSQL) & Passed & 22 Nov 2026, backend
+\texttt{d404f85} (same application code as \texttt{a987d78} except the
+correction rule), mobile \texttt{5d60fc7}, iOS simulator, Live mode.
+Keycloak login as \texttt{bs.demo}; prepared session with one animal
+in scope; scanned RFID-DL-1001 and confirmed the animal; recorded
+FMD-BOOSTER dose 1 on its open schedule; one sync attempt returned
+\texttt{ACCEPTED} (intent \texttt{835c1d2e}, record \texttt{9e266885});
+the history screen read the record back from the server
+(\Cref{fig:m2-live-run}). A database
+query for that intent found one row each in \texttt{health\_intent}
+(ACCEPTED), \texttt{clinical\_record} (linked to the schedule),
+\texttt{operation\_receipt} (HTTP 201), \texttt{source\_evidence}
+(\texttt{bs.demo}, BARN-DL-01, ACCEPTED) and
+\texttt{health\_audit\_outbox} (not yet published, no collector). \\ \hline
+App in demo mode & Run & Screens exercised manually against the in-app
+simulator, without the backend. \\ \hline
+Mobile automated tests (24) & Passed & \texttt{flutter test} at
+\texttt{5d60fc7}, 22 Nov 2026, Flutter 3.41.9 on macOS: 24/24 passed.
+They use in-memory and simulated adapters, not the live backend; the
+list is below. \\ \hline
 QAS09 fixture (20 drafts, 120 s) & Not run & Planned measure; see
 \Cref{sec:qas09}. \\ \hline
 \end{longtable}
 }
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\linewidth]{graphics/vinabeef/fig16-live-run.png}
+\caption{Live run on 22 November 2026 (iOS simulator, Keycloak and
+herd-health): (a) work session with one animal in scope and the record
+accepted by the server; (b) explicit confirmation of the scanned animal;
+(c) record details with intent ID, one send attempt and server record ID;
+(d) animal history read from the server.}\label{fig:m2-live-run}
+\end{figure}
 
 The mobile tests cover the behaviour the review asked for:
 
@@ -203,4 +248,7 @@ offline record for the same animal before sync goes to
 \texttt{NEEDS\_REVIEW}. This is the intended safe outcome, but it
 creates review work for the FM.
 \item The snapshot checker has not yet been run on a mobile export.
+\item The Live run covers one online capture. Offline capture against
+the live backend (T05) and the 20-draft QAS09 fixture have not been run;
+offline behaviour is covered by the automated mobile tests only.
 \end{itemize}
