@@ -105,7 +105,8 @@ evidence and outbox writes and preserved the previous resource version.
 This exercises the Health transaction in ADR-08. \\
 T09: RFID lookup &
 Unknown RFID returned no cattle and created no cattle record. Mobile
-selection and confirmation remain pending. \\
+selection and confirmation are implemented in the client
+(\Cref{sec:m2-mobile}). \\
 \bottomrule
 \end{tabularx}
 \caption{Health backend cases exercised by the integration suite.}
@@ -120,7 +121,7 @@ Checker verification against a mobile run export is pending.
 The Health backend results cover the fixture identity and grants shown
 above. End-to-end tests with the real identity source, mobile selection
 through receipt and history, and collector recovery still need
-separate evidence. The mobile flow is pending Thong's verification.
-T05 offline capture and sync remain design-only pending scope
-confirmation. The gate deadline and recovery targets retain their own
+separate evidence. The mobile flow, its server additions and the
+checks done so far are in \Cref{sec:m2-mobile}; T05 offline capture
+follows ADR-13. The gate deadline and recovery targets retain their own
 verification criteria in \Cref{sec:3}.

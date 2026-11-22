@@ -21,10 +21,13 @@ each farm. The design calls for:
 
 The views, commit boundaries, role and custody policy, and
 external-submission model form one consistent design, recorded in twelve
-architecture decisions and supported by the design principles in
+M1 architecture decisions and one M2 decision (ADR-13) and supported by the design principles in
 \Cref{sec:6}. In the M2 Health slice, the service integrated the
 authorization policy and exercised retry, scope, and
 source-evidence rollback against PostgreSQL.
-\Cref{sec:m2-health-results} records the test results and remaining
-mobile and identity integration checks. The other architecture
+\Cref{sec:m2-health-results} records the test results. The mobile
+client (\Cref{sec:m2-mobile}) adds barn capture with RFID, explicit
+animal confirmation and durable local drafts that the Health service
+accepts only after reconnection; real grant integration and the
+hardware reader remain open. The other architecture
 criteria in \Cref{sec:3} retain their own verification scope.

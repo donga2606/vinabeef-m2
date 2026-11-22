@@ -40,8 +40,9 @@ scheduler or heartbeat timer supplies the stimulus. Registration/custody
 context is versioned; unknown/stale context is provisional. \\ \hline
 \textbf{Manage Animal Health} & BS/FM within current permitted custody;
 original-farm FM approves correction & Registered cattle; current
-action/scope and expected version; clinical writes online; stable
-intent; authorized correction workflow. \\ \hline
+action/scope and expected version; server acceptance online (mobile
+capture may be a local draft, ADR-13); stable intent; authorized
+correction workflow. \\ \hline
 \textbf{Generate Reports \& Monitoring} & BS/FM scoped business reports;
 EM approved aggregates; FM approves external submission & Authorized
 dataset and current scope at execution/download. SA accesses approved
@@ -104,8 +105,9 @@ Corrections retain the original and append an approved linked version. &
 Not found/invalid input/unauthorized/out-of-scope $\rightarrow$
 reject; retry same intent $\rightarrow$ original outcome; mandatory
 source-evidence failure $\rightarrow$ rollback/no success; collector
-outage $\rightarrow$ retain outbox for later relay; clinical
-operations are online-only. & One clinical effect per successful intent,
+outage $\rightarrow$ retain outbox for later relay; no network
+$\rightarrow$ mobile keeps a pending local draft, not accepted until
+the server outcome. & One clinical effect per successful intent,
 complete original/correction history, source evidence and authorized
 current view. \\ \hline
 \textbf{Gen\-er\-ate Reports \& Monitoring} & Recheck current role/scope;
@@ -127,3 +129,31 @@ The five use cases cover human workflows and autonomous gate/timer
 processing. They are related workflows, not a mandatory sequence in
 which every movement must be followed by a health write. Transfer and
 external delivery follow their specific approval and evidence contracts.
+
+\subsection*{Manage Animal Health -- mobile capture flow (M2)}
+
+{\small
+\begin{longtable}{|p{0.20\linewidth}|p{0.71\linewidth}|}
+\hline
+\textbf{Item} & \textbf{Description} \\ \hline
+\endhead
+Actors & BS or FM with a phone and handheld RFID reader; Health
+service; Keycloak. \\ \hline
+Preconditions & Signed in; work session prepared online (animals in
+scope cached, under 12 hours old). \\ \hline
+Main flow & 1. Scan tag. 2. App matches the tag to an animal in the
+session and shows it. 3. User confirms the animal. 4. User enters the
+vaccination or observation; saved as a local draft. 5. User confirms;
+app creates the intent ID and freezes the body (pending sync, shown as
+\emph{saved on this device}). 6. When online, app submits; Health
+checks current rights, custody and version and commits record, receipt
+and evidence. 7. App shows \emph{accepted} and the history. \\ \hline
+Alternate flows & Unknown or out-of-scope tag: no animal, nothing
+created. Several tags: user must choose one. Response lost: app reads
+the receipt and does not resubmit if it exists. Token expired: records
+stay pending; user signs in again. Version changed: needs review.
+Dose already completed or custody moved: rejected with a reason. \\ \hline
+Postconditions & At most one clinical record per intent. A local draft
+is never shown as accepted. Every final outcome keeps its reason. \\ \hline
+\end{longtable}
+}
