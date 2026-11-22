@@ -323,5 +323,12 @@ continuous gate capture is worth a bounded window of stale read-only
 access. Health events occurring during an outage are entered after
 recovery.}
 
+\textbf{M2 note:} the mobile prototype refines the last sentence. A
+signed-in user with a prepared work session may save a clinical record
+on the device while offline, as a local draft with a stable intent ID.
+The Health service still accepts a record only when online, after
+checking current grants, custody and version; server acceptance stays
+online-only (\Cref{sec:qas09,sec:m2-mobile}).
+
 \textbf{Compliance:} QAS02 (local processing continues); QAS04
 (online-only actions are denied).

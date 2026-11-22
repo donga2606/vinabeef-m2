@@ -399,7 +399,8 @@ attempt to save. Interrupt connectivity before or after saving, then
 reconnect and retry with the same intent ID. \\ \hline
 Environment & The tag and custody start in the verified scope. The
 client loses and regains network access. Option A follows the online-only
-baseline. Option B proposes durable local drafts during the outage. \\ \hline
+baseline. Option B keeps durable local drafts during the outage; the
+M2 prototype uses Option B. \\ \hline
 Artifact & Mobile form, local draft store and sync state, together with
 the Health intent, receipt, clinical record and source evidence. \\ \hline
 Response & Under A, the app reports that a new offline save is unavailable.
@@ -416,9 +417,11 @@ Conflicts retain their actual nonaccepted outcome. \\ \hline
 \end{longtable}
 }
 
-Trace: SC-02 and SC-05, \Cref{adr:12}, and T05/T06. Offline drafts and
-their proposed measures remain design-only pending confirmation of
-scope. The online retry controls are recorded in
+Trace: SC-02 and SC-05, \Cref{adr:12}, and T05/T06. The prototype uses
+Option B (\Cref{sec:m2-mobile}): drafts are saved offline on the device
+and the server accepts a record only when online. Automated mobile tests
+cover pending, retry and restart behaviour; the 20-draft fixture and
+the 120-second measure have not been run. The online retry controls are recorded in
 \Cref{tab:m2-health-cases}.
 
 \newpage
@@ -457,5 +460,7 @@ effect. \\ \hline
 
 Trace: SC-02, SC-04 and SC-05, \Cref{adr:07,adr:08}, and T06--T09.
 \Cref{tab:m2-health-cases} covers the backend examples exercised on
-\texttt{staging}. The mobile confirmation flow and integration with
-the real identity and grant providers remain pending.
+\texttt{staging}. The mobile scan, multi-tag choice and explicit
+animal confirmation are implemented, and the Live run used real
+Keycloak tokens (\Cref{sec:m2-mobile-verification}). Integration with
+a real grant provider remains pending.
