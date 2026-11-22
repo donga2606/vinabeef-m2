@@ -16,13 +16,13 @@ This section covers the second M2 issue: a barn supervisor (BS) or farm
 manager (FM) records a vaccination or health observation at the barn
 with a phone and an RFID reader, while the barn may have no network.
 Phan Ho Duy Thong implemented the mobile client and the server
-additions it needs. The design is recorded in ADR-13 (\Cref{adr:13}),
-the views in \Cref{sec:4.6}, and the requirement in FR-26.
+additions it needs. It follows Option B of QAS09 (\Cref{sec:qas09}):
+the phone keeps durable local drafts while offline, and only the Health
+service accepts a record.
 
 \subsection{End-to-end flow}\label{sec:m2-mobile-flow}
 
-\Cref{fig:15} shows the full flow. The numbered steps match the screens
-of the app.
+The numbered steps below match the screens of the app.
 
 \begin{enumerate}
 \item \textbf{Prepare session (online).} The user signs in with
@@ -66,7 +66,7 @@ authorization, custody and version in one transaction (ADR-08).
 
 \subsection{Module structure}\label{sec:m2-mobile-modules}
 
-\Cref{fig:12} shows the source dependencies. The mobile client follows
+The mobile client follows
 the same ports-and-adapters split as \texttt{herd-health}.
 
 {\small
