@@ -49,6 +49,40 @@ paths:
         '401': {$ref: '#/components/responses/Unauthenticated'}
         '404': {$ref: '#/components/responses/NotFound'}
         '503': {$ref: '#/components/responses/AuthorityUnavailable'}
+  /api/v1/cattle/in-scope:
+    get:
+      tags: [Cattle]
+      operationId: listCattleInScope
+      summary: List animals the caller may currently view, with open scheduled doses
+      description: >-
+        Used by the mobile app to prepare a time-limited offline capture window. Every animal
+        is authorized individually with VIEW_CATTLE against current grants; farm filtering in the
+        query is data minimisation only. UNKNOWN and INACTIVE registrations are excluded. The list
+        never grants write permission: every health intent is re-authorized on submit. A caller
+        with no current scope receives an empty list. Bounded to 5000 rows.
+      responses:
+        '200':
+          description: Animals in the caller's current scope
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CattleInScopePage'}
+              example:
+                items:
+                  - cattleId: 10000000-0000-4000-8000-000000000001
+                    rfid: RFID-DL-1001
+                    displayName: Cow DL 1001
+                    registrationStatus: ACTIVE
+                    farmId: FARM-DL
+                    farmName: Dak Lak
+                    barnId: BARN-DL-01
+                    resourceVersion: 0
+                    custodyVersion: 0
+                    openSchedules:
+                      - scheduleId: 20000000-0000-4000-8000-000000000001
+                        vaccineCode: FMD-BOOSTER
+                        dueAt: '2026-11-20T08:00:00Z'
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '503': {$ref: '#/components/responses/AuthorityUnavailable'}
   /api/v1/health-intents:
     post:
       tags: [Health intents]
@@ -258,6 +292,42 @@ components:
         barnId: {type: string}
         resourceVersion: {type: integer, format: int64}
         custodyVersion: {type: integer, format: int64}
+    OpenSchedule:
+      type: object
+      additionalProperties: false
+      required: [scheduleId, vaccineCode, dueAt]
+      properties:
+        scheduleId: {type: string, format: uuid}
+        vaccineCode: {type: string}
+        dueAt: {type: string, format: date-time}
+    CattleInScope:
+      type: object
+      additionalProperties: false
+      required: [cattleId, rfid, displayName, registrationStatus, farmId, farmName, barnId, resourceVersion, custodyVersion, openSchedules]
+      properties:
+        cattleId: {type: string, format: uuid}
+        rfid: {type: string}
+        displayName: {type: string}
+        registrationStatus: {type: string, enum: [ACTIVE]}
+        farmId: {type: string}
+        farmName: {type: string}
+        barnId: {type: string}
+        resourceVersion:
+          type: integer
+          format: int64
+          description: Send as expectedVersion in a health intent captured for this animal.
+        custodyVersion: {type: integer, format: int64}
+        openSchedules:
+          type: array
+          items: {$ref: '#/components/schemas/OpenSchedule'}
+    CattleInScopePage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/CattleInScope'}
     HealthRecord:
       type: object
       additionalProperties: false

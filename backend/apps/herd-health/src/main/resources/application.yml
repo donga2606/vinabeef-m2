@@ -15,6 +15,13 @@ spring:
       quiet-period: 1s
 
 health:
+  security:
+    # Tokens must carry iss == public issuer (what the phone/host sees); signing keys are fetched
+    # from the internal Keycloak route inside Docker. See infra/oidc and docs/engineering/local-dev.md.
+    public-issuer: ${OIDC_PUBLIC_ISSUER:http://localhost:8081/realms/vinabeef}
+    jwk-set-uri: ${OIDC_INTERNAL_JWK_SET_URI:http://localhost:8081/realms/vinabeef/protocol/openid-connect/certs}
+    # Claim used as the trusted subject id. The current-grant fixture is keyed by username.
+    principal-claim: ${HEALTH_PRINCIPAL_CLAIM:preferred_username}
   authorization:
     # Explicit local-only fallback while the IAM current-grant adapter is unavailable.
     fixture-enabled: ${HEALTH_GRANTS_FIXTURE_ENABLED:false}

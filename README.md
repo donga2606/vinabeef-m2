@@ -46,6 +46,18 @@ The first `up`/`mvn` run downloads images and Maven dependencies, which takes a 
 
 Hot reload: while `herd-health` runs, saving a file under `backend/apps/herd-health/src/main` triggers a recompile inside the container, and Spring devtools then restarts the app. No image rebuild is needed.
 
+## Mobile + Health end-to-end
+
+```bash
+./dev up -Profile local                          # central-db + keycloak + herd-health
+curl -i localhost:8080/api/v1/cattle/in-scope    # 401 without a token = expected
+cd ../vinabeef-mobile && ./scripts/bootstrap.sh ios   # or: android. Needs Flutter >= 3.35 on the host
+flutter test && flutter run
+```
+
+In the app choose **Live**, log in with `bs.demo` / `bs-local`, *Prepare session*, scan `RFID-DL-1001`.
+The Flutter app lives in its own folder next to this repo (`../vinabeef-mobile`). Steps, demo scenarios and API mapping: `vinabeef-mobile/README.md`.
+
 ## Gate: cattle in/out (DONGA-03/04)
 
 ```
@@ -71,7 +83,7 @@ curl -s -X POST localhost:8474/proxies/wan-rabbitmq -d '{"enabled":false}'   # c
 
 | Port | What |
 |---|---|
-| 8080 | herd-health API (no gateway in P0): `GET /api/v1/cattle?rfid=...`, `POST /api/v1/health-intents`, `GET /api/v1/health-intents/{intentId}`, `GET /api/v1/cattle/{cattleId}/health-history` |
+| 8080 | herd-health API (no gateway in P0): `GET /api/v1/cattle?rfid=...`, `POST /api/v1/health-intents`, `GET /api/v1/health-intents/{intentId}`, `GET /api/v1/cattle/{cattleId}/health-history`, `GET /api/v1/cattle/in-scope` (mobile work session). Bearer JWT from Keycloak required |
 | 8081 | Keycloak. Issuer `http://localhost:8081/realms/vinabeef`. Admin `admin` / see `.env` |
 | 127.0.0.1:15672 | RabbitMQ management (gate) |
 | 127.0.0.1:8474 | Toxiproxy admin API (gate) |
@@ -83,11 +95,12 @@ Android emulator: run `adb reverse tcp:8080 tcp:8080 && adb reverse tcp:8081 tcp
 ## Ownership
 
 `compose.yaml`, `infra/`, `scripts/dev.ps1`, `dev`, `contracts/events/*`, `backend/apps/farm-edge`, `backend/apps/movement-alert`, `backend/tools/reader-emulator`: Đông A (Phú reviews build).
-`backend/apps/herd-health` implements Health API v1, its own `health` schema migrations, immutable clinical records, retry receipts, per-record history authorization and transactional source evidence. The access-policy adapter uses the policy library. Current-grant integration fails closed by default; a synthetic grant fixture is available only when `HEALTH_GRANTS_FIXTURE_ENABLED=true` is explicitly set.
+`backend/apps/herd-health` implements Health API v1, its own `health` schema migrations, immutable clinical records, retry receipts, per-record history authorization and transactional source evidence. The access-policy adapter uses the policy library. Current-grant integration fails closed by default; a synthetic grant fixture is available only when `HEALTH_GRANTS_FIXTURE_ENABLED=true` is explicitly set (compose sets it for the local demo). JWT validation (issuer + JWKS, principal = `preferred_username`) is in `HealthSecurityConfiguration`.
+Flutter app (Thông): separate folder `../vinabeef-mobile`, see its README.
 `infra/oidc/realm/vinabeef-realm.json` is a placeholder dev realm (synthetic users `bs.demo` / `fm.demo`) until Phú's realm lands.
 
 ## Not done yet
 
 - Health demo data is inserted by versioned Flyway migrations; there is no separate seed command.
-- Security wiring (Phú), Flutter app (Thông), CI (Phú).
+- IAM current-grant adapter (Phú): herd-health still reads grants from the JSON fixture. CI (Phú).
 - Gate: machine identity for readers, initial-count import, multi-farm/HA topology: Design-only.

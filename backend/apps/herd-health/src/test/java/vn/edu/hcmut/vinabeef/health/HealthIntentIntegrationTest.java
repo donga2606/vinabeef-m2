@@ -34,7 +34,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -100,12 +104,12 @@ class HealthIntentIntegrationTest {
         String request = vaccinationRequest(intentId, 0);
 
         authenticate();
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json").content(request))
+        perform(post("/api/v1/health-intents").contentType("application/json").content(request))
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.status").value("ACCEPTED"))
                 .andExpect(jsonPath("$.replayed").value(false)).andReturn();
         for (int attempt = 0; attempt < 3; attempt++) {
             authenticate();
-            mockMvc.perform(post("/api/v1/health-intents").contentType("application/json").content(request))
+            perform(post("/api/v1/health-intents").contentType("application/json").content(request))
                     .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ACCEPTED"))
                     .andExpect(jsonPath("$.replayed").value(true));
         }
@@ -124,10 +128,10 @@ class HealthIntentIntegrationTest {
         String first = healthStatusRequest(intentId, 0, "normal");
         String changed = healthStatusRequest(intentId, 0, "fever");
         authenticate();
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json").content(first))
+        perform(post("/api/v1/health-intents").contentType("application/json").content(first))
                 .andExpect(status().isCreated());
         authenticate();
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json").content(changed))
+        perform(post("/api/v1/health-intents").contentType("application/json").content(changed))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("IDEMPOTENCY_KEY_REUSED"));
         assertEquals(1, count("clinical_record"));
         assertEquals(1, count("source_evidence"));
@@ -200,7 +204,7 @@ class HealthIntentIntegrationTest {
         authenticate();
         String request = objectMapper.writeValueAsString(Maps.request(UUID.randomUUID(), CATTLE_2,
                 "HEALTH_STATUS", Map.of("observation", "normal"), 0, null, null, null));
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json").content(request))
+        perform(post("/api/v1/health-intents").contentType("application/json").content(request))
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
         assertEquals(0, count("health_intent"));
     }
@@ -208,7 +212,7 @@ class HealthIntentIntegrationTest {
     @Test
     void unverifiedRfidIsNotAutoCreated() throws Exception {
         authenticate();
-        mockMvc.perform(get("/api/v1/cattle").param("rfid", "RFID-UNKNOWN-99"))
+        perform(get("/api/v1/cattle").param("rfid", "RFID-UNKNOWN-99"))
                 .andExpect(status().isNotFound());
         assertEquals(4, count("cattle"));
     }
@@ -217,13 +221,13 @@ class HealthIntentIntegrationTest {
     void inaccessibleAndUnknownReceiptsHaveTheSameNotFoundResponse() throws Exception {
         UUID intentId = UUID.randomUUID();
         authenticate("bs.demo");
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json")
+        perform(post("/api/v1/health-intents").contentType("application/json")
                         .content(healthStatusRequest(intentId, 0, "normal")))
                 .andExpect(status().isCreated());
 
         authenticate("denied.demo");
-        mockMvc.perform(get("/api/v1/health-intents/{intentId}", intentId)).andExpect(status().isNotFound());
-        mockMvc.perform(get("/api/v1/health-intents/{intentId}", UUID.randomUUID()))
+        perform(get("/api/v1/health-intents/{intentId}", intentId)).andExpect(status().isNotFound());
+        perform(get("/api/v1/health-intents/{intentId}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
 
@@ -232,7 +236,7 @@ class HealthIntentIntegrationTest {
         jdbc.update("UPDATE cattle SET resource_version = 4 WHERE cattle_id = ?", CATTLE_1);
         jdbc.update("UPDATE cattle_custody SET custody_version = 3 WHERE cattle_id = ?", CATTLE_1);
         authenticate();
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json")
+        perform(post("/api/v1/health-intents").contentType("application/json")
                         .content(healthStatusRequest(UUID.randomUUID(), 0, "normal")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.receipt.status").value("NEEDS_REVIEW"))
@@ -246,12 +250,12 @@ class HealthIntentIntegrationTest {
     void scheduledDoseCannotCreateTwoEffectiveRecordsAndCorrectionsStayLinked() throws Exception {
         UUID firstIntent = UUID.randomUUID();
         authenticate();
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json")
+        perform(post("/api/v1/health-intents").contentType("application/json")
                         .content(vaccinationRequest(firstIntent, 0)))
                 .andExpect(status().isCreated());
 
         authenticate();
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json")
+        perform(post("/api/v1/health-intents").contentType("application/json")
                         .content(vaccinationRequest(UUID.randomUUID(), 1)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.receipt.reasonCode").value("SCHEDULE_ALREADY_COMPLETED"));
@@ -261,7 +265,7 @@ class HealthIntentIntegrationTest {
         UUID originalRecord = jdbc.queryForObject("SELECT record_id FROM clinical_record WHERE intent_id = ?", UUID.class, firstIntent);
         String correction = correctionRequest(UUID.randomUUID(), originalRecord, 1);
         authenticate();
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json").content(correction))
+        perform(post("/api/v1/health-intents").contentType("application/json").content(correction))
                 .andExpect(status().isCreated());
         assertEquals(2, count("clinical_record"));
         assertEquals(originalRecord, jdbc.queryForObject("SELECT correction_of_record_id FROM clinical_record "
@@ -277,7 +281,7 @@ class HealthIntentIntegrationTest {
     void currentFarmManagerCanReadOriginRecordAndReceiptAfterTransferButCannotViewDestinationCattle() throws Exception {
         UUID intentId = UUID.randomUUID();
         authenticate("bs.demo");
-        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json")
+        perform(post("/api/v1/health-intents").contentType("application/json")
                         .content(healthStatusRequest(intentId, 0, "normal")))
                 .andExpect(status().isCreated());
         UUID cattleId = CATTLE_1;
@@ -286,12 +290,12 @@ class HealthIntentIntegrationTest {
         jdbc.update("UPDATE cattle SET resource_version = 2 WHERE cattle_id = ?", cattleId);
 
         authenticate("fm.origin");
-        mockMvc.perform(get("/api/v1/health-intents/{intentId}", intentId))
+        perform(get("/api/v1/health-intents/{intentId}", intentId))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ACCEPTED"));
-        mockMvc.perform(get("/api/v1/cattle/{cattleId}/health-history", cattleId))
+        perform(get("/api/v1/cattle/{cattleId}/health-history", cattleId))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.records.length()").value(1))
                 .andExpect(jsonPath("$.records[0].originFarmId").value("FARM-DL"));
-        mockMvc.perform(get("/api/v1/cattle").param("rfid", "RFID-DL-1001"))
+        perform(get("/api/v1/cattle").param("rfid", "RFID-DL-1001"))
                 .andExpect(status().isNotFound()); // Outside-scope RFID lookup returns 404 per OpenAPI.
     }
 
@@ -310,6 +314,61 @@ class HealthIntentIntegrationTest {
         return objectMapper.writeValueAsString(Maps.request(intentId, CATTLE_1, "VACCINATION",
                 Map.of("vaccineCode", "FMD-BOOSTER", "batchNumber", "BATCH-CORRECTED"),
                 expectedVersion, null, recordId, "Corrected batch number after checking the vial."));
+    }
+
+    /**
+     * Requests go through the real security filter chain. The principal chosen with authenticate()
+     * is attached to the request (the filter chain would otherwise replace a thread-local context).
+     */
+    private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {
+        Authentication current = SecurityContextHolder.getContext().getAuthentication();
+        return mockMvc.perform(current == null ? request
+                : request.with(SecurityMockMvcRequestPostProcessors.authentication(current)));
+    }
+
+    @Test
+    void requestWithoutBearerTokenIsUnauthenticatedProblem() throws Exception {
+        SecurityContextHolder.clearContext();
+        mockMvc.perform(get("/api/v1/cattle/in-scope"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+        mockMvc.perform(post("/api/v1/health-intents").contentType("application/json")
+                        .content(healthStatusRequest(UUID.randomUUID(), 0, "normal")))
+                .andExpect(status().isUnauthorized());
+        assertEquals(0, count("health_intent"));
+    }
+
+    @Test
+    void cattleInScopeListsOnlyAnimalsTheCallerMayViewWithOpenSchedules() throws Exception {
+        authenticate("bs.demo");
+        perform(get("/api/v1/cattle/in-scope"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].rfid").value("RFID-DL-1001"))
+                .andExpect(jsonPath("$.items[0].openSchedules[0].scheduleId").value(SCHEDULE_1.toString()));
+
+        authenticate("fm.origin");
+        perform(get("/api/v1/cattle/in-scope"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2)); // FARM-DL barns 01 + 02, not FARM-GL / UNKNOWN
+
+        authenticate("denied.demo");
+        perform(get("/api/v1/cattle/in-scope"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0));
+    }
+
+    @Test
+    void completedScheduleIsNoLongerOpenInScope() throws Exception {
+        authenticate();
+        perform(post("/api/v1/health-intents").contentType("application/json")
+                        .content(vaccinationRequest(UUID.randomUUID(), 0)))
+                .andExpect(status().isCreated());
+        authenticate();
+        perform(get("/api/v1/cattle/in-scope"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].resourceVersion").value(1))
+                .andExpect(jsonPath("$.items[0].openSchedules.length()").value(0));
     }
 
     private void authenticate() {

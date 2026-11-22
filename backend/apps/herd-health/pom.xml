@@ -10,7 +10,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <!-- Skeleton only (owner: Khánh). Boots, migrates own schema, exposes /actuator/health. No business endpoints yet. -->
+  <!-- Owner: Khánh. Health API (lookup, submit, receipt, history, cattle-in-scope) secured as an OAuth2/JWT resource server. -->
   <artifactId>herd-health</artifactId>
 
   <dependencies>
@@ -36,8 +36,8 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-core</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
@@ -55,6 +55,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

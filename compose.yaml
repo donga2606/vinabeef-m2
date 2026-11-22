@@ -73,6 +73,8 @@ services:
       HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD}
       OIDC_PUBLIC_ISSUER: ${OIDC_PUBLIC_ISSUER}
       OIDC_INTERNAL_JWK_SET_URI: ${OIDC_INTERNAL_JWK_SET_URI}
+      # Local demo only: current grants come from a JSON fixture until the IAM adapter exists.
+      HEALTH_GRANTS_FIXTURE_ENABLED: ${HEALTH_GRANTS_FIXTURE_ENABLED:-true}
     volumes:
       - ./backend:/workspace/backend
       - ./contracts:/workspace/contracts:ro
