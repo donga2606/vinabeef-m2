@@ -1,0 +1,54 @@
+\section{AI Tool Usage Declaration}\label{app:B}
+
+The group used AI tools during M2. The group remains responsible for
+all submitted content and can explain it. Prompts are the main
+requests, translated from Vietnamese and summarised; full chat logs
+are not included.
+
+{\small
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.14\linewidth}|>{\raggedright\arraybackslash}p{0.33\linewidth}|>{\raggedright\arraybackslash}p{0.43\linewidth}|}
+\hline
+\textbf{Field} & \textbf{Codex} & \textbf{Claude (Anthropic, Claude Opus 5.5)} \\ \hline
+\endhead
+\textbf{Purpose} &
+Read the submitted M1 report, the M2 brief and the course material;
+propose the team plan, task split and repository setup. &
+Support part of the coding only: the mobile client module and small
+additions to \texttt{herd-health} for it, under rules defined by the
+group (SOLID, the existing ports-and-adapters structure of
+\texttt{herd-health}, the Health API contract). The core backend
+(\texttt{herd-health} domain, \texttt{access-policy} library, farm edge
+and gate) was written by the group. Also helped check the report's
+mobile content against a member review. \\ \hline
+\textbf{Main prompts} &
+``Read our M1 submission and the M2 assignment, and make a plan'';
+``Not decided yet, propose for us''; ``Rewrite the plan for all
+members, and plan the repo init and setup.'' &
+Summarised: ``Implement the mobile client module from the team task
+files, following the group's SOLID rules''; ``Add the
+\texttt{herd-health} endpoint the mobile client is missing, following
+SOLID''; ``Find why the \texttt{herd-health} integration test fails'';
+``Only the origin-farm Farm Manager may apply a health correction'';
+``Check the report for missing mobile content against this member
+review.'' \\ \hline
+\textbf{Supported outputs} &
+Team plan, task scopes, requirement-gap analysis, test/SOLID/view
+checklists, repository setup plan. No code or test results. &
+\textbf{Code (selected tasks):} Flutter app \texttt{vinabeef-mobile}
+(\texttt{5d60fc7}); in-scope endpoint and JWT resource server in
+\texttt{herd-health} (\texttt{99b87af}); test helper fix
+(\texttt{d404f85}); \texttt{APPLY\_CORRECTION} rule and tests
+(\texttt{a987d78}).\newline
+\textbf{Report:} draft text for \Cref{sec:m2-mobile} and the QAS09/10,
+ADR-12 and RBAC updates, edited and approved by the group. \\ \hline
+\textbf{Human review} &
+The group reviewed scope, policies and estimates and made the final
+choices. &
+The group defined the SOLID and structure rules the agent followed,
+chose the design options (Option B offline drafts, the correction rule)
+and approved each change before it was added. All test results were
+run and recorded by the group: \texttt{flutter test} 24/24, backend
+\texttt{verify} 103/103 on a macOS host, the Live run on an iOS
+simulator, and the PostgreSQL checks for the Live intent. \\ \hline
+\end{longtable}
+}
